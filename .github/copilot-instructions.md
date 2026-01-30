@@ -21,7 +21,7 @@
 - Prefer async endpoints for I/O-bound work; run with `uvicorn` + `gunicorn` or `uvicorn` with multiple workers in production.
 - Use dependency injection for DB and auth resources.
 - Keep business logic in services (not directly in route handlers).
-- Database: MongoDB via PyMongo or an ODM (Beanie is optional). Store canonical timestamps as ISODate (e.g., UTC `created_at` as datetime).
+- Database: MongoDB via Beanie ODM. Store canonical timestamps as ISODate (e.g., UTC `created_at` as datetime).
 - Use transactions when updating multiple collections (e.g., user balance + payments collection + purchases collection).
 - Return clear error responses with meaningful HTTP status codes and problem details.
 

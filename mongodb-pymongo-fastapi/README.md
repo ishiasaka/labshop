@@ -25,4 +25,12 @@ uvicorn app:app --reload
 
 Now you can load http://localhost:8000/docs in your browser ... but there won't be much to see until you've inserted some data.
 
+Optional: create collections, validators and indexes (idempotent)
+
+```bash
+# Create collections, validators and indexes (idempotent):
+export MONGODB_URL="mongodb+srv://<username>:<password>@<url>/<db>?retryWrites=true&w=majority"
+python db_init.py
+```
+
 If you have any questions or suggestions, check out the [MongoDB Community Forums](https://developer.mongodb.com/community/forums/)!

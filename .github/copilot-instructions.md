@@ -88,7 +88,7 @@
 cd api && pip install -r requirements.txt && uvicorn main:app --reload --port 8000
 
 # Frontend (dev)
-cd tablets && npm install && npm run dev
+Refer to `./tablets/README.md`
 
 # Reader Agent (dev)
 cd scanner && cargo run --bin reader-agent

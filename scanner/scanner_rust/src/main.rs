@@ -70,7 +70,7 @@ fn get_usb_port() -> Option<u32> {
     "#;
 
     let output = Command::new("powershell")
-        .args(&["-ExecutionPolicy", "Bypass", "-Command", ps_script])
+        .args(["-ExecutionPolicy", "Bypass", "-Command", ps_script])
         .output()
         .ok()?;
 
@@ -100,7 +100,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let felica_free: Symbol<FelicaFree> = lib.get(b"felica_free\0")?;
 
         // RC-S320 は NULL で開けることが多い．ダメなら USB0 なども試す
-        let ports: [Option<&CStr>; 2] = [None, Some(CStr::from_bytes_with_nul(b"USB0\0")?)];
+        let ports: [Option<&CStr>; 2] = [None, Some(c"USB0")];
 
         let mut pasori: Pasori = std::ptr::null_mut();
         for p in ports {

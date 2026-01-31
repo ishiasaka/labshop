@@ -17,12 +17,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Setup Rust (actions-rs/toolchain)
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          targets: i686-pc-windows-msvc
-          components: rustfmt, clippy
+          override: true
+          target: i686-pc-windows-msvc
+          components: clippy,rustfmt
 
       - name: Cache cargo
         uses: actions/cache@v4

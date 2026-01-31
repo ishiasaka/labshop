@@ -20,6 +20,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: stable
           targets: i686-pc-windows-msvc
           components: rustfmt, clippy
 

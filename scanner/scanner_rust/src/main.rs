@@ -171,7 +171,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                     // 2. IDm, USB_Port を表示
                     let port = get_usb_port();
                     let idm_str = hex_upper(&idm);
-                    let port_str = port.map(|p| p.to_string()).unwrap_or_else(|| "Unknown".to_string());
+                    let port_str = port
+                        .map(|p| p.to_string())
+                        .unwrap_or_else(|| "Unknown".to_string());
                     println!("IDm={} USB_Port={}", idm_str, port_str);
 
                     // 3. REST API に POST

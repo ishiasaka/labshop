@@ -1,6 +1,7 @@
 use libloading::{Library, Symbol};
 use regex::Regex;
 use rodio::{Decoder, OutputStream, Sink};
+use serde::Serialize;
 use std::{
     error::Error,
     ffi::{c_char, CStr},
@@ -10,6 +11,14 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
+
+const API_URL: &str = "http://127.0.0.1:3658/m1/1081275-1070247-default/api/scan";
+
+#[derive(Serialize)]
+struct ScanData {
+    idm: String,
+    usb_port: Option<u32>,
+}
 
 type Pasori = *mut std::ffi::c_void;
 type Felica = *mut std::ffi::c_void;
@@ -29,6 +38,26 @@ fn hex_upper(bytes: &[u8]) -> String {
         s.push_str(&format!("{:02X}", b));
     }
     s
+}
+
+/// REST API に POST 送信
+fn post_scan_data(idm: &str, usb_port: Option<u32>) {
+    let data = ScanData {
+        idm: idm.to_string(),
+        usb_port,
+    };
+
+    match ureq::post(API_URL)
+        .set("Content-Type", "application/json")
+        .send_json(&data)
+    {
+        Ok(resp) => {
+            println!("POST OK: {}", resp.status());
+        }
+        Err(e) => {
+            eprintln!("POST Error: {}", e);
+        }
+    }
 }
 
 /// FeliCa リーダーが接続されている USB ポート番号を取得
@@ -121,27 +150,35 @@ fn main() -> Result<(), Box<dyn Error>> {
                 felica_free(f);
 
                 if idm != [0u8; 8] && idm != last_idm {
-                    let port = get_usb_port();
-                    let port_str = port.map(|p| p.to_string()).unwrap_or_else(|| "Unknown".to_string());
-                    println!("IDm={} USB_Port={}", hex_upper(&idm), port_str);
-                    last_idm = idm;
-                    last_read_time = Some(Instant::now());
-
-                    // Play sound file when card is detected
+                    // 1. 音を鳴らす（別スレッドで非同期再生）
                     let sound_path = std::env::current_exe()
                         .ok()
                         .and_then(|p| p.parent().map(|d| d.join("paypay.mp3")))
                         .unwrap_or_else(|| std::path::PathBuf::from("paypay.mp3"));
-                    if let Ok(file) = File::open(&sound_path) {
-                        if let Ok((_stream, stream_handle)) = OutputStream::try_default() {
-                            if let Ok(source) = Decoder::new(BufReader::new(file)) {
-                                if let Ok(sink) = Sink::try_new(&stream_handle) {
-                                    sink.append(source);
-                                    sink.sleep_until_end();
+                    thread::spawn(move || {
+                        if let Ok(file) = File::open(&sound_path) {
+                            if let Ok((_stream, stream_handle)) = OutputStream::try_default() {
+                                if let Ok(source) = Decoder::new(BufReader::new(file)) {
+                                    if let Ok(sink) = Sink::try_new(&stream_handle) {
+                                        sink.append(source);
+                                        sink.sleep_until_end();
+                                    }
                                 }
                             }
                         }
-                    }
+                    });
+
+                    // 2. IDm, USB_Port を表示
+                    let port = get_usb_port();
+                    let idm_str = hex_upper(&idm);
+                    let port_str = port.map(|p| p.to_string()).unwrap_or_else(|| "Unknown".to_string());
+                    println!("IDm={} USB_Port={}", idm_str, port_str);
+
+                    // 3. REST API に POST
+                    post_scan_data(&idm_str, port);
+
+                    last_idm = idm;
+                    last_read_time = Some(Instant::now());
                 }
             }
 

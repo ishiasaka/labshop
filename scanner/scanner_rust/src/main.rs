@@ -1,9 +1,12 @@
 use libloading::{Library, Symbol};
+use rodio::{Decoder, OutputStream, Sink};
 use std::{
     error::Error,
     ffi::{c_char, CStr},
+    fs::File,
+    io::BufReader,
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 type Pasori = *mut std::ffi::c_void;
@@ -68,8 +71,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         let system_code: u16 = 0xFFFF;
 
         let mut last_idm = [0u8; 8];
+        let mut last_read_time: Option<Instant> = None;
+        let cooldown = Duration::from_secs(2);
 
         loop {
+            // クールダウン中はスキップ
+            if let Some(t) = last_read_time {
+                if t.elapsed() < cooldown {
+                    thread::sleep(Duration::from_millis(150));
+                    continue;
+                }
+            }
+
             let f = felica_polling(pasori, system_code, 0x00, 0x00);
             if !f.is_null() {
                 let mut idm = [0u8; 8];
@@ -79,6 +92,23 @@ fn main() -> Result<(), Box<dyn Error>> {
                 if idm != [0u8; 8] && idm != last_idm {
                     println!("IDm={}", hex_upper(&idm));
                     last_idm = idm;
+                    last_read_time = Some(Instant::now());
+
+                    // Play sound file when card is detected
+                    let sound_path = std::env::current_exe()
+                        .ok()
+                        .and_then(|p| p.parent().map(|d| d.join("paypay.mp3")))
+                        .unwrap_or_else(|| std::path::PathBuf::from("paypay.mp3"));
+                    if let Ok(file) = File::open(&sound_path) {
+                        if let Ok((_stream, stream_handle)) = OutputStream::try_default() {
+                            if let Ok(source) = Decoder::new(BufReader::new(file)) {
+                                if let Ok(sink) = Sink::try_new(&stream_handle) {
+                                    sink.append(source);
+                                    sink.sleep_until_end();
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

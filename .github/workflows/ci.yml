@@ -17,13 +17,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Rust (actions-rs/toolchain)
-        uses: actions-rs/toolchain@v1
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
-          target: i686-pc-windows-msvc
-          components: clippy,rustfmt
+          targets: i686-pc-windows-msvc, x86_64-pc-windows-msvc
+          components: clippy, rustfmt
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -42,14 +40,14 @@ jobs:
         working-directory: scanner/scanner_rust
         run: cargo fmt --check
 
-      - name: Clippy
+      - name: Clippy (32-bit)
         working-directory: scanner/scanner_rust
         run: cargo clippy --target i686-pc-windows-msvc -- -D warnings
 
       - name: Build (32-bit)
         working-directory: scanner/scanner_rust
-        run: cargo build --release --target i686-pc-windows-msvc
+        run: cargo build --release --target i686-pc-windows-msvc --verbose
 
       - name: Build (64-bit)
         working-directory: scanner/scanner_rust
-        run: cargo build --release
+        run: cargo build --release --target x86_64-pc-windows-msvc --verbose

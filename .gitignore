@@ -1,9 +1,3 @@
 .DS_Store
 *.bak
-scanner/scanner_rust/target/i686-pc-windows-gnu
-scanner/scanner_rust/target/x86_64-pc-windows-gnu
-scanner/scanner_rust/target/debug
-scanner/scanner_rust/target/release
-scanner/scanner_rust/target/i686-pc-windows-msvc/release/deps
-scanner/scanner_rust/target/i686-pc-windows-msvc/release/build
-scanner/scanner_rust/target/i686-pc-windows-msvc/release/.fingerprint
+scanner/scanner_rust/target

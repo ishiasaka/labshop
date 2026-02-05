@@ -11,6 +11,10 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
+use actix_web::{App, HttpServer};
+mod api;
+mod ic_reader;
+mod utills;
 
 const API_URL: &str = "http://127.0.0.1:3658/m1/1081275-1070247-default/api/scan";
 
@@ -85,7 +89,8 @@ fn get_usb_port() -> Option<u32> {
     }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+//　りんたろうくんのコードはここから
+fn ic_operation() -> Result<(), Box<dyn Error>> {
     // exe と同じフォルダに felicalib.dll を置く
     let lib = unsafe { Library::new("felicalib.dll") }?;
 
@@ -187,4 +192,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             thread::sleep(Duration::from_millis(150));
         }
     }
+}
+
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            .configure(api::api_controller)
+    })
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
 }

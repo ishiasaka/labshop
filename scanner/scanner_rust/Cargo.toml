@@ -10,3 +10,4 @@ libloading = "0.8"
 rodio = "0.19"
 regex = "1"
 ureq = { version = "2", features = ["json"] }
+actix-web = "4.12.1"

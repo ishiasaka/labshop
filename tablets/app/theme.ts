@@ -211,6 +211,7 @@ const getDesignTokens = (mode: PaletteMode) => ({
     MuiOutlinedInput: {
       styleOverrides: {
         root: ({ theme }: { theme: any }) => ({
+          borderRadius: '8px',
           '&:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.palette.primary.main, // Use main for hover in both modes roughly
             borderWidth: '1px',

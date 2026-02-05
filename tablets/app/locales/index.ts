@@ -8,6 +8,19 @@ export const translations = {
     theme: {
       toggle: 'Toggle theme',
     },
+    payback: {
+      title: 'Pay back amount',
+      user: 'User',
+      totalOwed: 'Total Owed',
+      howMuch: 'How much do you want to pay back?',
+      selectAmount: 'Select amount',
+      otherAmount: 'Other Amount',
+      enterAmount: 'Enter amount',
+      confirmPayment: 'Confirm Payment',
+      backToPresets: 'Back to presets',
+      processing: 'Payment processing...',
+      success: 'Payment Successful!',
+    },
   },
   ja: {
     languageName: '日本語',
@@ -17,6 +30,19 @@ export const translations = {
     owedAmount: '未払い金額',
     theme: {
       toggle: 'テーマ切り替え',
+    },
+    payback: {
+      title: '金額を支払う',
+      user: 'ユーザー',
+      totalOwed: '未払い合計',
+      howMuch: 'いくら支払いますか？',
+      selectAmount: '金額を選択',
+      otherAmount: 'その他の金額',
+      enterAmount: '金額を入力',
+      confirmPayment: '支払いを確定',
+      backToPresets: 'プリセットに戻る',
+      processing: '支払い処理中...',
+      success: '支払い完了！',
     },
   },
 };

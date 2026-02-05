@@ -223,6 +223,15 @@ const getDesignTokens = (mode: PaletteMode) => ({
         }),
       },
     },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          backgroundColor: mode === 'dark' ? '#F9FAFB' : '#111827',
+          color: mode === 'dark' ? '#111827' : '#F9FAFB',
+          fontSize: '0.75rem',
+        },
+      },
+    },
     // Fix icons color in dark mode if needed
     MuiSvgIcon: {
         styleOverrides: {

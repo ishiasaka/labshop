@@ -7,10 +7,13 @@ import { useTheme } from '@mui/material/styles';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { ColorModeContext } from '../provider';
+import Tooltip from '@mui/material/Tooltip';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ThemeToggle() {
   const theme = useTheme();
   const colorMode = React.useContext(ColorModeContext);
+  const { t } = useLanguage();
 
   return (
     <Box
@@ -24,13 +27,15 @@ export default function ThemeToggle() {
         boxShadow: 1,
       }}
     >
-      <IconButton onClick={colorMode.toggleColorMode} color="inherit">
-        {theme.palette.mode === 'dark' ? (
-          <Brightness7Icon />
-        ) : (
-          <Brightness4Icon />
-        )}
-      </IconButton>
+      <Tooltip title={t('theme.toggle')}>
+        <IconButton onClick={colorMode.toggleColorMode} color="inherit">
+          {theme.palette.mode === 'dark' ? (
+            <Brightness7Icon />
+          ) : (
+            <Brightness4Icon />
+          )}
+        </IconButton>
+      </Tooltip>
     </Box>
   );
 }

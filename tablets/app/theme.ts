@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, PaletteMode } from '@mui/material/styles';
 import { Poppins } from 'next/font/google';
 
 declare module '@mui/material/Button' {
@@ -12,83 +12,156 @@ const poppins = Poppins({
   weight: ['400', '500', '600', '700'],
 });
 
-const theme = createTheme({
+const getDesignTokens = (mode: PaletteMode) => ({
   palette: {
-    primary: {
-      // The main "Jungle Green" used for the "Upgrade Now" button and Logo
-      main: '#059669',
-      900: '#064E3B', // Very dark green (Logo text / Headings)
-      800: '#065F46',
-      700: '#047857',
-      600: '#059669', // Main Button Color
-      500: '#10B981', // Brighter Green (Active Toggles)
-      400: '#34D399',
-      light: '#D1FAE5', // Very light mint (Sidebar "Settings" active state)
-      dark: '#064E3B',
-      contrastText: '#FFFFFF',
-      A700: '#064E3B',
-      A100: '#ECFDF5', // Ultra light green (API Box background)
-    },
-    secondary: {
-      // Replaces the monochrome white.
-      // Used for "Learn More" or "Settings" buttons inside cards.
-      main: '#FFFFFF',
-      900: '#111827',
-      800: '#1F2937',
-      700: '#374151',
-      600: '#4B5563',
-      500: '#6B7280',
-      dark: '#E5E7EB', // Border color for secondary buttons
-      light: '#F9FAFB',
-      contrastText: '#374151', // Dark Grey text on White buttons
-    },
-    success: {
-      // Often the same as primary in Green themes, but we can make it distinct
-      main: '#10B981', // Bright Emerald
-      A200: '#6EE7B7',
-    },
-    error: {
-      // The "Remove" text color (Soft Red/Pink)
-      main: '#EF4444',
-      A100: '#FEE2E2',
-      A200: '#F87171',
-    },
-    warning: {
-      main: '#F59E0B',
-      A100: '#FEF3C7',
-      A200: '#FBBF24',
-    },
-    info: {
-      main: '#3B82F6', // Standard Blue for links (if any)
-      A200: '#60A5FA',
-    },
-    grey: {
-      // Neutral greys for the main dashboard background
-      100: '#F3F4F6', // Main Dashboard Background (Light Grey)
-      200: '#E5E7EB', // Card Borders / Dividers
-      300: '#D1D5DB', // Disabled Toggles
-      400: '#9CA3AF',
-      500: '#6B7280', // Subtitles / "Menu", "General" labels
-      600: '#4B5563', // Body text
-      700: '#374151', // Card Headings
-      800: '#1F2937',
-      A100: '#F9FAFB', // Sidebar Background
-      A200: '#E5E7EB',
-    },
-    text: {
-      primary: '#111827', // Almost Black for main page titles
-      secondary: '#6B7280', // Grey for descriptions
-    },
-    divider: '#E5E7EB', // Subtle card borders
+    mode,
+    ...(mode === 'light'
+      ? {
+          // Light mode colors
+          primary: {
+            main: '#059669',
+            900: '#064E3B',
+            800: '#065F46',
+            700: '#047857',
+            600: '#059669',
+            500: '#10B981',
+            400: '#34D399',
+            light: '#D1FAE5',
+            dark: '#064E3B',
+            contrastText: '#FFFFFF',
+            A700: '#064E3B',
+            A100: '#ECFDF5',
+          },
+          secondary: {
+            main: '#FFFFFF',
+            900: '#111827',
+            800: '#1F2937',
+            700: '#374151',
+            600: '#4B5563',
+            500: '#6B7280',
+            dark: '#E5E7EB',
+            light: '#F9FAFB',
+            contrastText: '#374151',
+          },
+          success: {
+            main: '#10B981',
+            A200: '#6EE7B7',
+          },
+          error: {
+            main: '#EF4444',
+            A100: '#FEE2E2',
+            A200: '#F87171',
+          },
+          warning: {
+            main: '#F59E0B',
+            A100: '#FEF3C7',
+            A200: '#FBBF24',
+          },
+          info: {
+            main: '#3B82F6',
+            A200: '#60A5FA',
+          },
+          grey: {
+            100: '#F3F4F6',
+            200: '#E5E7EB',
+            300: '#D1D5DB',
+            400: '#9CA3AF',
+            500: '#6B7280',
+            600: '#4B5563',
+            700: '#374151',
+            800: '#1F2937',
+            A100: '#F9FAFB',
+            A200: '#E5E7EB',
+          },
+          text: {
+            primary: '#111827',
+            secondary: '#6B7280',
+          },
+          divider: '#E5E7EB',
+          background: {
+            default: '#FFFFFF',
+            paper: '#FFFFFF',
+          },
+        }
+      : {
+          // Dark mode colors
+          primary: {
+            main: '#10B981', // Brighter green for dark mode
+            900: '#064E3B',
+            800: '#065F46',
+            700: '#047857',
+            600: '#059669',
+            500: '#10B981',
+            400: '#34D399',
+            light: '#064E3B',
+            dark: '#D1FAE5',
+            contrastText: '#000000',
+            A700: '#34D399',
+            A100: '#064E3B',
+          },
+          secondary: {
+            main: '#1F2937',
+            900: '#F9FAFB',
+            800: '#F3F4F6',
+            700: '#E5E7EB',
+            600: '#D1D5DB',
+            500: '#9CA3AF',
+            dark: '#374151',
+            light: '#111827',
+            contrastText: '#F3F4F6',
+          },
+          success: {
+            main: '#10B981',
+            A200: '#6EE7B7',
+          },
+          error: {
+            main: '#F87171',
+            A100: '#7F1D1D',
+            A200: '#EF4444',
+          },
+          warning: {
+            main: '#FBBF24',
+            A100: '#78350F',
+            A200: '#F59E0B',
+          },
+          info: {
+            main: '#60A5FA',
+            A200: '#3B82F6',
+          },
+          grey: {
+            100: '#1F2937',
+            200: '#374151',
+            300: '#4B5563',
+            400: '#6B7280',
+            500: '#9CA3AF',
+            600: '#D1D5DB',
+            700: '#E5E7EB',
+            800: '#F3F4F6',
+            A100: '#111827', // Sidebar background in dark mode
+            A200: '#374151',
+          },
+          text: {
+            primary: '#F9FAFB',
+            secondary: '#D1D5DB',
+          },
+          divider: '#374151',
+          background: {
+            default: '#111827', // Dark background
+            paper: '#1F2937', // Darker paper
+          },
+        }),
   },
   typography: {
     fontFamily: poppins.style.fontFamily,
-    body1: { baseColor: '#1C1C1E', color: '#1C1C1E' },
-    body2: { baseColor: '#6E6E73', color: '#6E6E73' },
+    body1: {
+        fontSize: '1rem',
+    },
+    body2: {
+        fontSize: '0.875rem',
+    },
     h6: { fontSize: '1.5rem' },
     h5: { fontSize: '1.75rem' },
     h4: { fontSize: '2rem' },
-    // ... other typography styles if needed
   },
   components: {
     MuiTypography: {
@@ -121,12 +194,10 @@ const theme = createTheme({
     },
     MuiPaper: {
       styleOverrides: {
-        root: {
-          backgroundColor: 'white',
-        },
-        rounded: {
-          borderRadius: '8px',
-        },
+        root: ({ theme }: { theme: any }) => ({
+           borderRadius: '8px',
+           backgroundImage: 'none', // Remove default gradient in dark mode
+        }),
       },
     },
     MuiInputBase: {
@@ -139,20 +210,28 @@ const theme = createTheme({
     },
     MuiOutlinedInput: {
       styleOverrides: {
-        root: ({ theme }) => ({
+        root: ({ theme }: { theme: any }) => ({
           '&:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.primary[700],
+            borderColor: theme.palette.primary.main, // Use main for hover in both modes roughly
             borderWidth: '1px',
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.primary[700],
+            borderColor: theme.palette.primary.main,
             borderWidth: '1px',
-            boxShadow: '0 0 1px 2px rgba(41, 116, 255, 0.15)',
+            boxShadow: `0 0 1px 2px ${mode === 'dark' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(41, 116, 255, 0.15)'}`,
           },
         }),
       },
     },
+    // Fix icons color in dark mode if needed
+    MuiSvgIcon: {
+        styleOverrides: {
+            root: {
+                // Default icon color behavior should be fine, but can override if needed
+            }
+        }
+    }
   },
 });
 
-export default theme;
+export default getDesignTokens;

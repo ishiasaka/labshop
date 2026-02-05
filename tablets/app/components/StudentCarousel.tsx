@@ -48,7 +48,10 @@ export default function StudentCarousel() {
         display: 'flex',
         alignItems: 'center',
         position: 'relative',
-        backgroundColor: theme.palette.grey[100],
+        backgroundColor:
+          theme.palette.mode === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.background.default,
       }}
     >
       <Box
@@ -77,7 +80,7 @@ export default function StudentCarousel() {
               alignItems: 'center',
               p: 4,
               flexShrink: 0,
-              backgroundColor: 'white',
+              backgroundColor: 'background.paper',
               transition: 'transform 0.3s ease',
               '&:hover': {
                 transform: 'scale(1.05)',

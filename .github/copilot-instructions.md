@@ -42,6 +42,8 @@
   - Pattern: Co-locate tests with components in `__tests__` directories or identical filename `.test.tsx` suffixes.
   - Run: `nvm use && yarn test` or `nvm use && yarn test:watch` during development.
   - Requirement: Critical user flows (like the "ThemeToggle" or "LanguageSwitcher") must have unit tests.
+  - Always add tests for new components.
+
 - **Styling & Components**:
   - Use Material UI (`@mui/material`) for core components.
   - Avoid raw CSS/SCSS modules unless standard MUI customization is insufficient.

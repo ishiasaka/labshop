@@ -27,7 +27,7 @@ jobs:
 
       - name: Run DB init
         env:
-          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          MONGODB_URL: ${{ secrets.MONGODB_LOCAL_URL }}
         run: |
           echo "Running db_init.py"
           python mongodb-pymongo-fastapi/db_init.py

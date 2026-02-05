@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { LanguageProvider } from './context/LanguageContext';
 import {
   ThemeProvider as MUIThemeProvider,
   createTheme,
@@ -45,10 +46,12 @@ export default function Provider(props: { children: React.ReactNode }) {
 
   return (
     <ColorModeContext.Provider value={colorMode}>
-      <MUIThemeProvider theme={theme}>
-        <CssBaseline />
-        {props.children}
-      </MUIThemeProvider>
+      <LanguageProvider>
+        <MUIThemeProvider theme={theme}>
+          <CssBaseline />
+          {props.children}
+        </MUIThemeProvider>
+      </LanguageProvider>
     </ColorModeContext.Provider>
   );
 }

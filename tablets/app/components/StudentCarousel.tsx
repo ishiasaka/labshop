@@ -3,6 +3,7 @@
 import React from 'react';
 import { Box, Typography, Paper, useTheme } from '@mui/material';
 import { keyframes } from '@emotion/react';
+import { useLanguage } from '../context/LanguageContext';
 
 // Mock Data
 export type Student = {
@@ -35,6 +36,7 @@ const scroll = keyframes`
 
 export default function StudentCarousel() {
   const theme = useTheme();
+  const { t } = useLanguage();
 
   // Duplicate the list to ensure seamless scrolling
   const displayedStudents = [...STUDENTS, ...STUDENTS];
@@ -105,7 +107,7 @@ export default function StudentCarousel() {
                 color="text.secondary"
                 sx={{ mb: 1, fontWeight: 500 }}
               >
-                Owed Amount
+                {t('owedAmount')}
               </Typography>
               <Typography
                 variant="h3"

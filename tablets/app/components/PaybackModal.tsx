@@ -218,7 +218,7 @@ export default function PaybackModal({
       </Box>
 
       <DialogTitle sx={{ p: 0, mb: 3, mt: 1 }}>
-        <Typography variant="h5" fontWeight="bold">
+        <Typography variant="h5" component="div" fontWeight="bold">
           {paymentStatus === 'idle' ? t.payback.title : ''}
         </Typography>
       </DialogTitle>

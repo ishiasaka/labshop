@@ -1,3 +1,4 @@
+# TODO: this is example code, will be modified to fit the LabShop project
 from requests import get, post, put, delete, HTTPError
 
 

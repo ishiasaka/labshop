@@ -1,4 +1,4 @@
-import { createTheme, PaletteMode } from '@mui/material/styles';
+import { PaletteMode, Theme } from '@mui/material/styles';
 import { Poppins } from 'next/font/google';
 
 declare module '@mui/material/Button' {
@@ -154,10 +154,10 @@ const getDesignTokens = (mode: PaletteMode) => ({
   typography: {
     fontFamily: poppins.style.fontFamily,
     body1: {
-        fontSize: '1rem',
+      fontSize: '1rem',
     },
     body2: {
-        fontSize: '0.875rem',
+      fontSize: '0.875rem',
     },
     h6: { fontSize: '1.5rem' },
     h5: { fontSize: '1.75rem' },
@@ -194,9 +194,9 @@ const getDesignTokens = (mode: PaletteMode) => ({
     },
     MuiPaper: {
       styleOverrides: {
-        root: ({ theme }: { theme: any }) => ({
-           borderRadius: '8px',
-           backgroundImage: 'none', // Remove default gradient in dark mode
+        root: () => ({
+          borderRadius: '8px',
+          backgroundImage: 'none', // Remove default gradient in dark mode
         }),
       },
     },
@@ -210,7 +210,7 @@ const getDesignTokens = (mode: PaletteMode) => ({
     },
     MuiOutlinedInput: {
       styleOverrides: {
-        root: ({ theme }: { theme: any }) => ({
+        root: ({ theme }: { theme: Theme }) => ({
           borderRadius: '8px',
           '&:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.palette.primary.main, // Use main for hover in both modes roughly
@@ -235,12 +235,12 @@ const getDesignTokens = (mode: PaletteMode) => ({
     },
     // Fix icons color in dark mode if needed
     MuiSvgIcon: {
-        styleOverrides: {
-            root: {
-                // Default icon color behavior should be fine, but can override if needed
-            }
-        }
-    }
+      styleOverrides: {
+        root: {
+          // Default icon color behavior should be fine, but can override if needed
+        },
+      },
+    },
   },
 });
 

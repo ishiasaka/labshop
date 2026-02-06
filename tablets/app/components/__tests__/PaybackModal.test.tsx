@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  act,
-} from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import PaybackModal from '../PaybackModal';
 import { LanguageProvider } from '../../context/LanguageContext';
 import '@testing-library/jest-dom';

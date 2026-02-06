@@ -8,7 +8,6 @@ import '@testing-library/jest-dom';
 
 describe('ThemeToggle', () => {
   const toggleColorMode = jest.fn();
-  const theme = createTheme({ palette: { mode: 'light' } });
 
   const renderWithProviders = (
     ui: React.ReactNode,

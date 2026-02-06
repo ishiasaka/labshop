@@ -25,6 +25,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') as Language;
     if (savedLanguage && translations[savedLanguage]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLanguage(savedLanguage);
     } else {
       const browserLang = navigator.language.split('-')[0] as Language;
@@ -41,6 +42,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   const t = (key: string) => {
     const keys = key.split('.');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let value: any = translations[language];
 
     for (const k of keys) {

@@ -1,8 +1,14 @@
-name: PR Checks
+name: PR Checks (tablets)
 
 on:
   pull_request:
     branches: [main]
+    paths:
+      - "tablets/**"
+
+defaults:
+  run:
+    working-directory: tablets
 
 jobs:
   lint-and-check:
@@ -17,7 +23,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'yarn'
+          cache: "yarn"
+          cache-dependency-path: tablets/yarn.lock
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile

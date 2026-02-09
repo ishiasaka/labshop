@@ -68,6 +68,7 @@
 - DON'T use floats for money in backend logic; use integers (cents) or fixed-decimal types.
 - DON'T put complex business rules only in the frontend.
 - DON'T ignore linter and formatting errors in PRs.
+- DON'T store MongoDB Atlas connection strings or credentials in code.
 
 ## Commits, Branching & PR workflow
 - Branch naming: `feat/<short-desc>`, `fix/<short-desc>`, `chore/<short-desc>`, `doc/<short-desc>`.

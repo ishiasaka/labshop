@@ -10,20 +10,30 @@ This script is idempotent: it will create collections if missing and will attemp
 to update validators via the `collMod` command when collections already exist.
 """
 from __future__ import annotations
-
 import os
 import sys
+import certifi
 from typing import Dict
-
 from pymongo import MongoClient, errors
+from dotenv import load_dotenv 
 
+load_dotenv()
 
 def get_db():
-    url = os.environ.get("MONGODB_URL", "mongodb://localhost:27017")
+    url = os.environ.get("MONGODB_URL") 
     db_name = os.environ.get("MONGODB_DB", "labshop")
-    client = MongoClient(url)
+    
+    if not url:
+        print("Error: MONGODB_URL not found in environment or .env file")
+        sys.exit(1)
+        
+    # --- THIS IS THE FIX FOR MAC ---
+    client = MongoClient(
+        url, 
+        tlsCAFile=certifi.where(),
+        tlsAllowInvalidCertificates=True
+    )
     return client[db_name]
-
 
 def create_or_update_validator(db, name: str, validator: Dict):
     try:
@@ -40,23 +50,23 @@ def create_or_update_validator(db, name: str, validator: Dict):
 
 def ensure_indexes(db):
     # user.id unique
-    db.user.create_index([("id", 1)], unique=True, name="user_id_uidx")
+    db.user.create_index([("student_id", 1)], unique=True, name="student_id_uidx")
     # ic_card primary id and uid unique
-    db.ic_card.create_index([("id", 1)], unique=True, name="ic_card_id_uidx")
+    db.ic_card.create_index([("card_id", 1)], unique=True, name="ic_card_id_uidx")
     db.ic_card.create_index([("uid", 1)], unique=False, name="ic_card_uid_idx")
     db.ic_card.create_index([("student_id", 1)], name="ic_card_student_idx")
     # admin
-    db.admin.create_index([("id", 1)], unique=True, name="admin_id_uidx")
+    db.admin.create_index([("admin_id", 1)], unique=True, name="admin_id_uidx")
     # admin_log
-    db.admin_log.create_index([("id", 1)], unique=True, name="admin_log_id_uidx")
+    db.admin_log.create_index([("log_id", 1)], unique=True, name="admin_log_id_uidx")
     db.admin_log.create_index([("admin_id", 1)], name="admin_log_admin_idx")
     db.admin_log.create_index([("targeted_student_id", 1)], name="admin_log_targeted_idx")
     # shelf primary key is string id
-    db.shelf.create_index([("id", 1)], unique=True, name="shelf_id_uidx")
+    db.shelf.create_index([("shelf_id", 1)], unique=True, name="shelf_id_uidx")
     # purchase/payment
-    db.purchase.create_index([("id", 1)], unique=True, name="purchase_id_uidx")
+    db.purchase.create_index([("purchase_id", 1)], unique=True, name="purchase_id_uidx")
     db.purchase.create_index([("student_id", 1)], name="purchase_student_idx")
-    db.payment.create_index([("id", 1)], unique=True, name="payment_id_uidx")
+    db.payment.create_index([("payment_id", 1)], unique=True, name="payment_id_uidx")
     db.payment.create_index([("student_id", 1)], name="payment_student_idx")
     # system_setting primary key
     db.system_setting.create_index([("key", 1)], unique=True, name="system_setting_key_uidx")
@@ -69,9 +79,9 @@ def main():
     user_validator = {
         "$jsonSchema": {
             "bsonType": "object",
-            "required": ["id", "first_name", "last_name", "account_balance", "created_at", "updated_at", "status"],
+            "required": ["student_id", "first_name", "last_name", "account_balance", "created_at", "updated_at", "status"],
             "properties": {
-                "id": {"bsonType": "long"},
+                "student_id": {"bsonType": ["int","long"]},
                 "first_name": {"bsonType": "string"},
                 "last_name": {"bsonType": "string"},
                 "account_balance": {"bsonType": "int"},
@@ -85,11 +95,11 @@ def main():
     ic_card_validator = {
         "$jsonSchema": {
             "bsonType": "object",
-            "required": ["id", "uid", "student_id", "status", "created_at"],
+            "required": ["card_id", "uid", "student_id", "status", "created_at"],
             "properties": {
-                "id": {"bsonType": "long"},
+                "card_id": {"bsonType": ["int","long"]},
                 "uid": {"bsonType": "string"},
-                "student_id": {"bsonType": "long"},
+                "student_id": {"bsonType": ["int","long"]},
                 "status": {"bsonType": "string"},
                 "created_at": {"bsonType": "date"},
             },
@@ -99,9 +109,9 @@ def main():
     admin_validator = {
         "$jsonSchema": {
             "bsonType": "object",
-            "required": ["id", "first_name", "last_name", "password_hash", "role"],
+            "required": ["admin_id", "first_name", "last_name", "password_hash", "role"],
             "properties": {
-                "id": {"bsonType": "int"},
+                "admin_id": {"bsonType": ["int","long"]},
                 "first_name": {"bsonType": "string"},
                 "last_name": {"bsonType": "string"},
                 "password_hash": {"bsonType": "string"},
@@ -113,12 +123,12 @@ def main():
     admin_log_validator = {
         "$jsonSchema": {
             "bsonType": "object",
-            "required": ["id", "admin_id", "action"],
+            "required": ["log_id", "admin_id", "action"],
             "properties": {
-                "id": {"bsonType": "long"},
-                "admin_id": {"bsonType": "int"},
+                "log_id": {"bsonType": ["int","long"]},
+                "admin_id": {"bsonType": ["int","long"]},
                 "action": {"bsonType": "string"},
-                "targeted_student_id": {"bsonType": "long"},
+                "targeted_student_id": {"bsonType": ["int","long"]},
             },
         }
     }
@@ -126,9 +136,9 @@ def main():
     shelf_validator = {
         "$jsonSchema": {
             "bsonType": "object",
-            "required": ["id", "price"],
+            "required": ["shelf_id", "price"],
             "properties": {
-                "id": {"bsonType": "string"},
+                "shelf_id": {"bsonType": "string"},
                 "price": {"bsonType": "int"},
             },
         }
@@ -137,10 +147,10 @@ def main():
     purchase_validator = {
         "$jsonSchema": {
             "bsonType": "object",
-            "required": ["id", "student_id", "shelf_id", "price", "status", "created_at"],
+            "required": ["purchase_id", "student_id", "shelf_id", "price", "status", "created_at"],
             "properties": {
-                "id": {"bsonType": "long"},
-                "student_id": {"bsonType": "long"},
+                "purchase_id": {"bsonType": ["int","long"]},
+                "student_id": {"bsonType": ["int","long"]},
                 "shelf_id": {"bsonType": "string"},
                 "price": {"bsonType": "int"},
                 "status": {"bsonType": "string"},
@@ -152,10 +162,10 @@ def main():
     payment_validator = {
         "$jsonSchema": {
             "bsonType": "object",
-            "required": ["id", "student_id", "amount_paid", "status", "created_at"],
+            "required": ["payment_id", "student_id", "amount_paid", "status", "created_at"],
             "properties": {
-                "id": {"bsonType": "long"},
-                "student_id": {"bsonType": "long"},
+                "payment_id": {"bsonType": ["int","long"]},
+                "student_id": {"bsonType": ["int","long"]},
                 "amount_paid": {"bsonType": "int"},
                 "status": {"bsonType": "string"},
                 "external_transaction_id": {"bsonType": "string"},

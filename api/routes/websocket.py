@@ -1,9 +1,9 @@
 from fastapi import APIRouter, WebSocket
 from ws.connection_manager import ws_connection_manager
 
-router = APIRouter()
+router = APIRouter(prefix="/ws")
 
-@router.websocket("/ws/tablet")
+@router.websocket("/tablet")
 async def websocket_endpoint(ws: WebSocket):
     await ws_connection_manager.connect_tablet(ws)
     try:

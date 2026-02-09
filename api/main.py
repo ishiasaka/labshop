@@ -1,8 +1,8 @@
 from fastapi import FastAPI, WebSocket
-from routes.tablet_websocket import router as tablet_router
+from routes.websocket import router as websocket_router
 app = FastAPI()
 
-app.include_router(tablet_router)
+app.include_router(websocket_router)
 
 @app.get("/")
 async def read_root():

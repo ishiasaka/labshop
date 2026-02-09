@@ -1,0 +1,514 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`StudentCarousel matches snapshot 1`] = `
+<div>
+  <div
+    class="MuiBox-root css-1b1uohs"
+  >
+    <div
+      class="MuiBox-root css-9whpxt"
+    >
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Alice Johnson
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            50.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Bob Smith
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            120.50
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Charlie Brown
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-145qu7f-MuiTypography-root"
+          >
+            $
+            0.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Diana Prince
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            75.25
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Evan Wright
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            210.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Fiona Gallagher
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            15.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          George Miller
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-145qu7f-MuiTypography-root"
+          >
+            $
+            0.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Hannah Abbott
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            45.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Ian Malcolm
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            99.99
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Julia Stiles
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            300.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Alice Johnson
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            50.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Bob Smith
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            120.50
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Charlie Brown
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-145qu7f-MuiTypography-root"
+          >
+            $
+            0.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Diana Prince
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            75.25
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Evan Wright
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            210.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Fiona Gallagher
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            15.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          George Miller
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-145qu7f-MuiTypography-root"
+          >
+            $
+            0.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Hannah Abbott
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            45.00
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Ian Malcolm
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            99.99
+          </h3>
+        </div>
+      </div>
+      <div
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-yv63g0-MuiPaper-root"
+        style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+      >
+        <div
+          class="MuiTypography-root MuiTypography-h4 css-12n03q4-MuiTypography-root"
+        >
+          Julia Stiles
+        </div>
+        <div
+          class="MuiBox-root css-xi606m"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-b4cum8-MuiTypography-root"
+          >
+            Owed Amount
+          </h6>
+          <h3
+            class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
+          >
+            $
+            300.00
+          </h3>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

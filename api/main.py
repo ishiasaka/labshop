@@ -10,7 +10,6 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone
 from beanie import init_beanie
 from passlib.context import CryptContext
-import bcrypt
 
 
 
@@ -29,6 +28,8 @@ from schema import (
 )
 
 load_dotenv()
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 MONGODB_URL = os.getenv("MONGODB_URL")
 MONGODB_DB = os.getenv("MONGODB_DB")
@@ -82,16 +83,14 @@ async def create_admin(data: AdminCreate):
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
 
-    password_bytes = data.password.encode('utf-8')
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(password_bytes, salt)
+    hashed_password = pwd_context.hash(data.password)
 
     new_admin = Admin(
         admin_id=int(datetime.now().timestamp()), 
         username=data.username,
         first_name=data.first_name,
         last_name=data.last_name,
-        password_hash=hashed_password.decode('utf-8'), 
+        password_hash=hashed_password, 
         role="admin"
     )
 
@@ -124,11 +123,7 @@ async def admin_login(credentials: dict = Body(...)):
 
     if not password or not stored_hash:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    password_bytes = password.encode('utf-8')
-    hash_bytes = stored_hash.encode('utf-8')
-
-    if not bcrypt.checkpw(password_bytes, hash_bytes):
+    if not pwd_context.verify(password, stored_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     full_name = f"{admin.first_name} {admin.last_name}"
@@ -223,7 +218,8 @@ async def list_shelves():
 async def create_purchase(p: PurchaseCreate):
     now = datetime.now(timezone.utc)
 
-    client: AsyncIOMotorClient = User.get_motor_client()
+    client = Purchase.get_settings().pymongo_collection.database.client
+    
     async with await client.start_session() as session:
         async with session.start_transaction():
 
@@ -248,6 +244,7 @@ async def create_purchase(p: PurchaseCreate):
             await student.save(session=session)
 
             purchase = Purchase(
+                purchase_id=int(now.timestamp() * 1000),
                 student_id=p.student_id,
                 shelf_id=p.shelf_id,
                 price=price,
@@ -273,24 +270,27 @@ async def create_payment(p: PaymentCreate):
     if not student:
         raise HTTPException(400, "Student does not exist")
 
+    if student.account_balance <= 0:
+        raise HTTPException(400, "Payment rejected: Student has no outstanding balance.")
+
     if p.idempotency_key:
         existing = await Payment.find_one(Payment.idempotency_key == p.idempotency_key)
         if existing:
             return existing
 
     amount = int(p.amount_paid)
-    student.account_balance -= amount
     
-    if student.account_balance < 0:
-        student.account_balance = 0
-        
+    if amount > student.account_balance:
+        amount = student.account_balance
+
+    student.account_balance -= amount
     await student.save()
 
     payment = Payment(
         payment_id=generated_pay_id,
         student_id=p.student_id,
         amount_paid=amount,
-        status=p.status or "completed",
+        status=p.status,
         external_transaction_id=p.external_transaction_id or "",
         idempotency_key=p.idempotency_key,
         created_at=now,

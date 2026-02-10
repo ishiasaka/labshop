@@ -33,13 +33,13 @@ class AdminOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class PurchaseCreate(BaseModel):
-    purchase_id: int 
     student_id: int 
     shelf_id: str 
-    price: int
     status: str = "completed"
 
 class PurchaseOut(PurchaseCreate):
+    purchase_id: int
+    price: int
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 

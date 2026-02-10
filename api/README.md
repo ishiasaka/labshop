@@ -9,3 +9,9 @@ $ pip install -r requirements.txt
 ```bash
 $ fastapi dev main.py
 ```
+
+## Docker Compose
+Simply run
+```bash
+docker compose up
+```

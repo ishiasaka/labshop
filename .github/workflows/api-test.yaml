@@ -17,24 +17,27 @@ defaults:
     working-directory: api
 
 jobs:
-  test:
+  e2e:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set up docker buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build docker image
+        run: docker build -t built-image .
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.14"
 
-      - name: Install dependencies
+      - name: Initialise container
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          docker compose -f docker-compose.test.yaml up -d
+          sleep 10 # Wait for the container to be ready
 
       - name: Run tests
-        
         run: |
           echo "Running tests"
-          pytest tests/ -v --tb=short
+          pytest e2e/ -v --tb=short

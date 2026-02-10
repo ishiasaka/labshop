@@ -6,6 +6,7 @@ import os
 @pytest.mark.asyncio
 class TestWebSocketConnection:
     url: str
+    
     @pytest.fixture(autouse=True)
     def setup(self) -> None:
         url = os.environ.get('API_URL', '127.0.0.1:8000')

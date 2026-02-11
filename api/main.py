@@ -1,6 +1,6 @@
 import os
 import certifi
-from fastapi import FastAPI, Body, HTTPException, Header, Depends, Request
+from fastapi import FastAPI, Body, HTTPException, Header, Depends, Request, WebSocket
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -25,6 +25,7 @@ from schema import (
     SystemSettingCreate, SystemSettingOut,
     AdminCreate, AdminOut, ScanRequest, CardRegistrationRequest
 )
+from routes.websocket import router as websocket_router
 
 load_dotenv()
 
@@ -74,6 +75,8 @@ app = FastAPI(
 
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+app.include_router(websocket_router)
 
 @app.get("/")
 def root():
@@ -552,3 +555,4 @@ async def get_active_cards():
 
     cards = await ICCard.find(ICCard.status == "active").sort(-ICCard.created_at).to_list()
     return cards
+

@@ -51,27 +51,30 @@ class PaymentCreate(BaseModel):
     idempotency_key: Optional[str] = None
 
 class PaymentOut(PaymentCreate):
+    payment_id: int
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 class ICCardCreate(BaseModel):
-    card_id: int 
     uid: str
     student_id: int
     status: str = "active"
 
 class ICCardOut(ICCardCreate):
+    card_id: Optional[int] = None 
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
-class AdminLogCreate(BaseModel):
-    log_id: int 
+class AdminLogCreate(BaseModel): 
     admin_id: int 
+    admin_name: str
     action: str
+    target: str
     targeted_student_id: Optional[int] = None 
 
 class AdminLogOut(AdminLogCreate):
-    timestamp: datetime 
+    log_id: int
+    created_at: datetime 
     model_config = ConfigDict(from_attributes=True)
 
 class ShelfCreate(BaseModel):
@@ -88,6 +91,23 @@ class SystemSettingCreate(BaseModel):
 class SystemSettingOut(SystemSettingCreate):
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+class ScanRequest(BaseModel):
+    uid: str
+    port_number: Optional[str] = None
+    shelf_id: Optional[str] = None
+
+    @property
+    def normalized_uid(self) -> str:
+        return self.uid.lower()
+
+    @property
+    def final_shelf_id(self) -> str:
+        return str(self.port_number or self.shelf_id or "").strip()
+
+class CardRegistrationRequest(BaseModel): 
+    uid: str
+    student_id: int
 
 
 class UsersOut(BaseModel):

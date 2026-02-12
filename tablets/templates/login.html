@@ -66,6 +66,7 @@
     }
 
     const data = await res.json();
+    localStorage.setItem("access_token", data.access_token);
 
     localStorage.setItem("loggedAdminId", data.admin_id);    
     localStorage.setItem("loggedAdminName", data.full_name);  

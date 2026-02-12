@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Labshop Admin Panel - Pro</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+
+    <h1>
+        Labshop Manager Dashboard
+        <button class="btn-logout" onclick="logout()">Logout</button>
+    </h1>
+
+    <div id="admin_greeting" style="margin-bottom: 20px; font-weight: bold; color: #555;"></div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div>
+            <div class="card capture-box">
+                <h3>Link IC Card</h3>
+                <span id="status_msg">🔍 Scanning for new card taps...</span>
+                <div class="input-group">
+                    <label>Detected UID:</label>
+                    <input type="text" id="uid" readonly placeholder="Tap card on Reader 5...">
+                </div>
+                <div class="input-group">
+                    <label>Assign to Student ID:</label>
+                    <input type="number" id="link_sid">
+                </div>
+                <button class="btn-primary" onclick="registerCard()">Connect Card to Student</button>
+            </div>
+
+            <div class="card">
+                <h3>Add New Student</h3>
+                <div class="input-group"><label>Student ID:</label><input type="number" id="sid"></div>
+                <div class="input-group"><label>First Name:</label><input type="text" id="fname"></div>
+                <div class="input-group"><label>Last Name:</label><input type="text" id="lname"></div>
+                <button class="btn-success" onclick="createUser()">Save New Student</button>
+            </div>
+
+    
+        </div>
+
+        <div>
+            <div class="card">
+                <h3>Live Student Debt List</h3>
+                <div class="input-group">
+                    <input type="text" id="studentSearch" placeholder="🔍 Search Name or ID..." onkeyup="filterStudents()">
+                </div>
+                <button class="btn-refresh" onclick="loadUsers()">Manual Refresh</button>
+                <table id="userTable">
+                    <thead><tr><th>ID</th><th>Name</th><th>Debt</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="card" style="border-top: 4px solid #ffc107;">
+                <h3>⚙️ System Settings</h3>
+                <div class="input-group">
+                    <label>Maximum Debt Limit (¥):</label>
+                    <input type="number" id="max_debt_limit">
+                </div>
+                <button class="btn-primary" style="background: #ffc107; color: #333;" onclick="updateMaxDebt()">Update Limit</button>
+            </div>
+
+            <div class="card">
+                <h3>Recent Activity</h3>
+                <table id="activityTable">
+                    <thead><tr><th>Time</th><th>Student</th><th>Type</th><th>Amount</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', path='js/admin.js') }}"></script>
+</body>
+</html>

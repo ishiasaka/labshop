@@ -73,8 +73,8 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="../tablets/templates")
+app.mount("/static", StaticFiles(directory="../tablets/public/static"), name="static")
 
 app.include_router(websocket_router)
 
@@ -432,7 +432,7 @@ async def card_scan(scan: ScanRequest):
                     "current_debt": student.account_balance
                 }
 
-            # 1. Update Student Balance
+            # Update Student Balance
             student.account_balance += price
             student.updated_at = now
             await student.save(session=session)

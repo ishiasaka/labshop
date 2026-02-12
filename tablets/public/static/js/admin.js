@@ -164,5 +164,6 @@ const getAdminHeaders = () => ({
         
 
         window.onload = loadData;
+        window.logout = logout;
         setInterval(pollForNewCard, 2000);
         setInterval(loadData, 10000);

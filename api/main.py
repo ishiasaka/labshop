@@ -73,8 +73,8 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-templates = Jinja2Templates(directory="../tablets/templates")
-app.mount("/static", StaticFiles(directory="../tablets/public/static"), name="static")
+templates = Jinja2Templates(directory="tablets/templates")
+app.mount("/static", StaticFiles(directory="tablets/public/static"), name="static")
 
 app.include_router(websocket_router)
 

@@ -167,6 +167,7 @@ async function updateMaxDebt() {
       alert('Server Error: ' + (errData.detail || 'Update failed'));
     }
   } catch (err) {
+    console.error('Connection failed:', err);
     alert('Connection failed. Is the server running?');
   }
 }
@@ -191,5 +192,8 @@ async function pollForNewCard() {
 
 window.onload = loadData;
 window.logout = logout;
+window.registerCard = registerCard;
+window.updateMaxDebt = updateMaxDebt;
+window.createUser = createUser;
 setInterval(pollForNewCard, 2000);
 setInterval(loadData, 10000);

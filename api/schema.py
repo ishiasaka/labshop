@@ -28,7 +28,6 @@ class AdminOut(BaseModel):
     admin_id: int 
     first_name: str
     last_name: str
-    password_hash: str
     role: str
     model_config = ConfigDict(from_attributes=True)
 
@@ -109,6 +108,13 @@ class CardRegistrationRequest(BaseModel):
     uid: str
     student_id: int
 
+class AdminLogin(BaseModel):
+    username: str
+    password: str
+
+class AdminSession(BaseModel):
+    admin_id: int
+    admin_name: str
 
 class UsersOut(BaseModel):
     users: List[UserOut]

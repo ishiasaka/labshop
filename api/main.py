@@ -2,13 +2,14 @@ import os
 import certifi
 from fastapi import FastAPI, Body, HTTPException, Header, Depends, Request, WebSocket
 from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
+#from fastapi.templating import Jinja2Templates
+#from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone
 from beanie import init_beanie
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
 import bcrypt
 
 
@@ -72,9 +73,15 @@ app = FastAPI(
     title="Labshop API",
     lifespan=lifespan
 )
-
-templates = Jinja2Templates(directory="tablets/templates")
-app.mount("/static", StaticFiles(directory="tablets/public/static"), name="static")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows local HTML files to talk to the API
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+#templates = Jinja2Templates(directory="../tablets/templates")
+#app.mount("/static", StaticFiles(directory="../tablets/public/static"), name="static")
 
 app.include_router(websocket_router)
 

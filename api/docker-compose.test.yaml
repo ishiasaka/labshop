@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      ENV: e2e
+  
+  db:
+    image: mongo:8.2.4-noble
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    
+volumes:
+  mongo-data:

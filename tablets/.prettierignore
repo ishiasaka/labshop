@@ -1,0 +1,10 @@
+node_modules/
+.next/
+pnpm-lock.yaml
+pnpm-workspace.yaml
+.scss
+coverage/
+.turbo/
+.vercel/
+.husky/
+dist/

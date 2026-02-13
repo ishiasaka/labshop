@@ -11,6 +11,8 @@ from beanie import init_beanie
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 import bcrypt
+from ws.connection_manager import ws_connection_manager
+from ws.ws_schema import WSSchema
 
 from models import (
     User, Admin, Purchase, Payment,
@@ -364,13 +366,18 @@ async def card_scan(scan: ScanRequest):
                 )
                 await new_card.insert()
                 print(">>> Successfully inserted NEW card to DB.")
-
             return {"status": "new_card", "message": "Card captured. Register in Admin."}
 
         student = await User.find_one(User.student_id == card.student_id)
         if not student:
             return {"status": "error", "message": "Student record missing."}
 
+        await ws_connection_manager.send_payload_to_tablet(WSSchema(
+            action="PAY_BACK",
+            student_id=str(student.student_id),
+            student_name=student.first_name,
+            debt_amount=student.account_balance
+        ))
         return {
             "status": "identified",
             "name": student.first_name,

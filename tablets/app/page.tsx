@@ -27,14 +27,13 @@ export default function Home() {
   const [paybackData, setPaybackData] = useState<PaybackPayload | null>(null);
 
   const handleWsMessage = useCallback((data: unknown) => {
-    console.log('hit');
     if (isPaybackPayload(data)) {
       setPaybackData(data);
     }
   }, []);
 
   const { status } = useWebSocket({ onMessage: handleWsMessage });
-  console.log('status :>> ', status);
+
   return (
     <Box
       sx={{

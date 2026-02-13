@@ -54,11 +54,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libccid \
     libusb-1.0-0 \
     ca-certificates \
+    mpg123 \
+    alsa-utils \
+    pulseaudio-utils \
   && rm -rf /var/lib/apt/lists/*
 
-# Copy libpafe shared library
-COPY --from=libpafe-builder /usr/local/lib/libpafe.so* /usr/local/lib/
-RUN ldconfig
+# Copy libpafe shared library and recreate symlinks
+# (Docker COPY flattens symlinks, so ldconfig won't register libpafe.so;
+#  we copy the real library and create proper symlinks manually.)
+COPY --from=libpafe-builder /usr/local/lib/libpafe.so.0.0.7 /usr/local/lib/
+RUN ln -sf libpafe.so.0.0.7 /usr/local/lib/libpafe.so.0 \
+ && ln -sf libpafe.so.0.0.7 /usr/local/lib/libpafe.so \
+ && ldconfig
+
+# Copy sound files
+COPY src/paypay.mp3 /usr/local/share/sounds/paypay.mp3
+COPY src/error.wav /usr/local/share/sounds/error.wav
 
 # Copy the built binary
 COPY --from=rust-builder /build/target/release/felica_scanner /usr/local/bin/felica_scanner

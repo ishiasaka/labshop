@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-router = APIRouter(prefix="/scanner")
+router = APIRouter()
 
 
 class ScanData(BaseModel):

@@ -1,0 +1,11 @@
+services:
+  felica-scanner:
+    build: .
+    privileged: true
+    network_mode: host
+    environment:
+      - API_URL=${API_URL:-http://localhost:8000/api/scan}
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - /sys/bus/usb:/sys/bus/usb:ro
+    restart: unless-stopped

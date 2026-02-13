@@ -3,24 +3,38 @@ import StudentCarousel from '@/app/components/StudentCarousel';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 import PaybackModal from '@/app/components/PaybackModal';
+import { useWebSocket } from '@/app/hooks/useWebSocket';
 import { Box } from '@mui/material';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+
+interface PaybackPayload {
+  name: string;
+  id: string;
+  owedAmount: number;
+}
+
+function isPaybackPayload(data: unknown): data is PaybackPayload {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    typeof (data as PaybackPayload).name === 'string' &&
+    typeof (data as PaybackPayload).id === 'string' &&
+    typeof (data as PaybackPayload).owedAmount === 'number'
+  );
+}
 
 export default function Home() {
-  const [paybackData, setPaybackData] = useState<{
-    name: string;
-    id: string;
-    owedAmount: number;
-  } | null>(null);
+  const [paybackData, setPaybackData] = useState<PaybackPayload | null>(null);
 
-  const handleSimulatePayback = () => {
-    setPaybackData({
-      name: 'Test User',
-      id: '123',
-      owedAmount: 3000,
-    });
-  };
+  const handleWsMessage = useCallback((data: unknown) => {
+    console.log('hit');
+    if (isPaybackPayload(data)) {
+      setPaybackData(data);
+    }
+  }, []);
 
+  const { status } = useWebSocket({ onMessage: handleWsMessage });
+  console.log('status :>> ', status);
   return (
     <Box
       sx={{
@@ -36,14 +50,33 @@ export default function Home() {
       <ThemeToggle />
       <StudentCarousel />
 
-      {/* Temporary Trigger Button */}
-      <Box sx={{ position: 'absolute', bottom: 16, right: 16, zIndex: 2000 }}>
-        <button
-          onClick={handleSimulatePayback}
-          style={{ padding: '8px 16px', cursor: 'pointer' }}
-        >
-          Simulate Payback
-        </button>
+      {/* WebSocket connection status indicator */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 16,
+          right: 16,
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <Box
+          data-testid="ws-status"
+          sx={{
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            backgroundColor:
+              status === 'connected'
+                ? 'success.main'
+                : status === 'connecting'
+                  ? 'warning.main'
+                  : 'error.main',
+            transition: 'background-color 0.3s ease',
+          }}
+        />
       </Box>
 
       {paybackData && (

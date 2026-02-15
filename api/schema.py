@@ -1,8 +1,8 @@
 from __future__ import annotations
-from dataclasses import Field
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Optional, List
+from models import UserStatus, PurchaseStatus, ICCardStatus, PaymentStatus, AdminRole
 
 class UserCreate(BaseModel):
     student_id: int 
@@ -11,7 +11,7 @@ class UserCreate(BaseModel):
 
 class UserOut(UserCreate):
     account_balance: int = 0
-    status: str = "active"
+    status: UserStatus 
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
@@ -21,54 +21,55 @@ class AdminCreate(BaseModel):
     first_name: str
     last_name: str
     password: str
-    role: str = "admin"
 
 
 class AdminOut(BaseModel):
     admin_id: int 
     first_name: str
     last_name: str
-    role: str
+    role: AdminRole
+    created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 class PurchaseCreate(BaseModel):
     student_id: int 
     shelf_id: str 
-    status: str = "completed"
 
 class PurchaseOut(PurchaseCreate):
     purchase_id: int
     price: int
+    status: PurchaseStatus
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 class PaymentCreate(BaseModel):
     student_id: int 
     amount_paid: int
-    status: str = "completed"
     external_transaction_id: Optional[str] = None
     idempotency_key: Optional[str] = None
 
 class PaymentOut(PaymentCreate):
     payment_id: int
+    status: PaymentStatus
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 class ICCardCreate(BaseModel):
     uid: str
-    student_id: int
-    status: str = "active"
+    student_id: Optional[int] = None
+    status : ICCardStatus = ICCardStatus.active
 
 class ICCardOut(ICCardCreate):
     card_id: Optional[int] = None 
     created_at: datetime
+    updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 class AdminLogCreate(BaseModel): 
     admin_id: int 
     admin_name: str
     action: str
-    target: str
+    target: Optional[str] = None
     targeted_student_id: Optional[int] = None 
 
 class AdminLogOut(AdminLogCreate):
@@ -78,9 +79,12 @@ class AdminLogOut(AdminLogCreate):
 
 class ShelfCreate(BaseModel):
     shelf_id: str 
+    usb_port: int
     price: int = 0
 
 class ShelfOut(ShelfCreate):
+    created_at: datetime
+    updated_at: datetime 
     model_config = ConfigDict(from_attributes=True)
 
 class SystemSettingCreate(BaseModel):
@@ -92,17 +96,14 @@ class SystemSettingOut(SystemSettingCreate):
     model_config = ConfigDict(from_attributes=True)
 
 class ScanRequest(BaseModel):
-    uid: str
-    port_number: Optional[str] = None
-    shelf_id: Optional[str] = None
+    idm: str = Field(..., min_length=4, max_length=64)
+    usb_port: Optional[int] = Field(default=None, ge=1, le=7)
+    timestamp: Optional[datetime] = None
 
     @property
     def normalized_uid(self) -> str:
-        return self.uid.lower()
-
-    @property
-    def final_shelf_id(self) -> str:
-        return str(self.port_number or self.shelf_id or "").strip()
+        return self.idm.strip().lower()
+    
 
 class CardRegistrationRequest(BaseModel): 
     uid: str

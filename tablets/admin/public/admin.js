@@ -1,5 +1,4 @@
 const API_BASE = 'http://localhost:8001';
-const ADMIN_PAGE = '/admin';
 const LOGIN_PAGE = '/login';
 
 function $(id) {
@@ -306,7 +305,7 @@ let dataTimer = null;
 async function pollForNewCard() {
   try {
     const res = await apiFetch('/get_captured_card/');
-    if (!res.ok) throw new Error('HTTP ${res.status}');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const card = await res.json();
 

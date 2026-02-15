@@ -1,6 +1,6 @@
 import os
 import certifi
-from fastapi import FastAPI, Body, HTTPException, Header, Depends, WebSocket
+from fastapi import FastAPI, Body, HTTPException, Header, Depends
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone
@@ -11,7 +11,6 @@ import bcrypt
 from models import UserStatus, PaymentStatus, ICCardStatus, PurchaseStatus, AdminRole
 from ws.connection_manager import ws_connection_manager
 from ws.ws_schema import WSSchema
-
 from models import (
     User, Admin, Purchase, Payment,
     ICCard, Shelf, AdminLog, SystemSetting

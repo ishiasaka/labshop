@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from pydantic import Field
 from typing import Optional
 from enum import Enum
+from beanie import PydanticObjectId
 
 def utcnow():
     return datetime.now(timezone.utc) 
@@ -48,7 +49,6 @@ class User(Document):
         name = "user"
 
 class Admin(Document):
-    admin_id: Indexed(int, unique=True)
     username: str
     first_name: str
     last_name: str
@@ -115,7 +115,7 @@ class ICCard(Document):
 
 class AdminLog(Document):
     log_id: Indexed(int, unique=True)
-    admin_id: int 
+    admin_id: PydanticObjectId
     admin_name: Optional[str] = None  
     action: str
     target: Optional[str] = None       

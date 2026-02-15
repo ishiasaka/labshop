@@ -24,7 +24,9 @@ from schema import (
     SystemSettingCreate, SystemSettingOut,
     AdminCreate, AdminOut, ScanRequest, CardRegistrationRequest
 )
-from routes.websocket import router as websocket_router
+from routes.websocket import router as WebsocketRouter
+from routes.admin import router as AdminRouter
+from services.auth import get_current_admin, TokenData
 
 load_dotenv()
 
@@ -37,11 +39,11 @@ MONGODB_DB = os.getenv("MONGODB_DB")
 if not MONGODB_URL or not MONGODB_DB:
     raise RuntimeError("MONGODB_URL or MONGODB_DB is not set")
 
-async def get_current_admin(
-    admin_id: str = Header(..., alias="admin-id"),
-    admin_name: str = Header(..., alias="admin-name")
-) -> AdminSession: 
-    return AdminSession(admin_id=int(admin_id), admin_name=admin_name)
+# async def get_current_admin(
+#     admin_id: str = Header(..., alias="admin-id"),
+#     admin_name: str = Header(..., alias="admin-name")
+# ) -> AdminSession: 
+#     return AdminSession(admin_id=int(admin_id), admin_name=admin_name)
 
 
 async def init_db():
@@ -77,67 +79,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(websocket_router)
+app.include_router(WebsocketRouter)
 
 @app.get("/")
 def root():
     return {"message": "Labshop API is running"}
 
-@app.post("/admin/")
-async def create_admin(data: AdminCreate):
-    existing = await Admin.find_one(Admin.username == data.username)
-    if existing:
-        raise HTTPException(status_code=400, detail="Username already exists")
-
-    password_bytes = data.password.encode('utf-8')
-
-    salt = bcrypt.gensalt()
-    hashed_password_bytes = bcrypt.hashpw(password_bytes, salt)
-
-    hashed_password = hashed_password_bytes.decode('utf-8')
-
-    new_admin = Admin(
-        admin_id=generate_id(), 
-        username=data.username,
-        first_name=data.first_name,
-        last_name=data.last_name,
-        password_hash=hashed_password, 
-        role=AdminRole.admin
-    )
-
-    
-    await new_admin.insert()
-    
-    return {"message": "Admin successfully created", "username": data.username}
-
-@app.post("/admin/login")
-async def admin_login(credentials: AdminLogin):
-    admin = await Admin.find_one(Admin.username == credentials.username)
-
-    if not admin:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    stored_hash = admin.password_hash
-    is_valid = bcrypt.checkpw(
-        credentials.password.encode("utf-8"),
-        stored_hash.encode("utf-8")
-    )
-
-    if not is_valid:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    full_name = f"{admin.first_name} {admin.last_name}"
-
-    return {
-        "admin_id": admin.admin_id,
-        "full_name": full_name,
-    }
-
+app.include_router(AdminRouter)
 
 @app.post("/users/", response_model=UserOut)
 async def create_user(
     user: UserCreate,
-    admin: AdminSession = Depends(get_current_admin),
+    admin: TokenData = Depends(get_current_admin),
 ):
     now = datetime.now(timezone.utc)
 
@@ -157,8 +110,8 @@ async def create_user(
 
     await AdminLog(
         log_id=generate_id(),
-        admin_id=admin.admin_id,
-        admin_name=admin.admin_name,
+        admin_id=admin.id,
+        admin_name=admin.full_name,
         action=f"Created student {new_user.first_name} {new_user.last_name}",
         target=f"Student {new_user.student_id}",
         targeted_student_id=new_user.student_id,
@@ -316,7 +269,7 @@ async def list_payments():
 
 
 @app.post("/system_settings/", response_model=SystemSettingOut)
-async def create_or_update_system_setting(s: SystemSettingCreate, admin: AdminSession = Depends(get_current_admin)):
+async def create_or_update_system_setting(s: SystemSettingCreate, admin: TokenData = Depends(get_current_admin)):
     now = datetime.now(timezone.utc)
     generated_log_id = generate_id()
     
@@ -332,8 +285,8 @@ async def create_or_update_system_setting(s: SystemSettingCreate, admin: AdminSe
 
     await AdminLog(
         log_id=generated_log_id,
-        admin_id=admin.admin_id,
-        admin_name=admin.admin_name,
+        admin_id=admin.id,
+        admin_name=admin.full_name,
         action=action_msg,
         target="System Settings",
         created_at=now
@@ -448,7 +401,7 @@ async def card_scan(scan: ScanRequest):
 
 
 @app.post("/register_card/")
-async def register_card(data: CardRegistrationRequest, admin: AdminSession = Depends(get_current_admin)):
+async def register_card(data: CardRegistrationRequest, admin: TokenData = Depends(get_current_admin)):
 
     student = await User.find_one(User.student_id == data.student_id)
     if not student:
@@ -497,8 +450,8 @@ async def register_card(data: CardRegistrationRequest, admin: AdminSession = Dep
 
             await AdminLog(
                 log_id=generate_id(),
-                admin_id=admin.admin_id,
-                admin_name=admin.admin_name,
+                admin_id=admin.id,
+                admin_name=admin.full_name,
                 action=f"Linked card {data.uid} to student {data.student_id}",
                 target=f"Student: {student.first_name} {student.last_name}",
                 targeted_student_id=data.student_id,

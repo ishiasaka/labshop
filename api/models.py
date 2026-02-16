@@ -60,7 +60,6 @@ class Admin(Document):
         name = "admin"
 
 class Purchase(Document):
-    purchase_id: Indexed(int, unique=True)
     student_id: int
     shelf_id: str
     price: int
@@ -71,7 +70,6 @@ class Purchase(Document):
         name = "purchase"
     
 class Payment(Document):
-    payment_id: Indexed(int, unique=True) 
     student_id: int
     amount_paid: int
     status: PaymentStatus = PaymentStatus.pending
@@ -99,7 +97,6 @@ class Shelf(Document):
         name = "shelf"
 
 class ICCard(Document):
-    card_id: Indexed(int, unique=True) 
     uid: Indexed(str, unique=True)
     student_id: Optional[int] = None
     status: ICCardStatus = ICCardStatus.active
@@ -114,7 +111,6 @@ class ICCard(Document):
         name = "ic_card"
 
 class AdminLog(Document):
-    log_id: Indexed(int, unique=True)
     admin_id: PydanticObjectId
     admin_name: Optional[str] = None  
     action: str

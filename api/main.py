@@ -8,7 +8,7 @@ from beanie import init_beanie
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 import bcrypt
-from models import UserStatus, PaymentStatus, ICCardStatus, PurchaseStatus, AdminRole
+from models import UserStatus, PaymentStatus, ICCardStatus, PurchaseStatus
 from ws.connection_manager import ws_connection_manager
 from ws.ws_schema import WSSchema
 from models import (
@@ -16,13 +16,13 @@ from models import (
     ICCard, Shelf, AdminLog, SystemSetting
 )
 from schema import (
-    AdminLogin, AdminSession, UserCreate, UserOut, UsersOut,
+    UserCreate, UserOut, UsersOut,
     PurchaseCreate, PurchaseOut, PurchasesOut,
     PaymentCreate, PaymentOut, PaymentsOut,
     ICCardCreate, ICCardOut,
-    ShelfCreate, ShelfOut,
+    ShelfCreate, ShelfOut, 
     SystemSettingCreate, SystemSettingOut,
-    AdminCreate, AdminOut, ScanRequest, CardRegistrationRequest
+    ScanRequest, CardRegistrationRequest
 )
 from routes.websocket import router as WebsocketRouter
 from routes.admin import router as AdminRouter
@@ -109,7 +109,6 @@ async def create_user(
     await new_user.insert()
 
     await AdminLog(
-        log_id=generate_id(),
         admin_id=admin.id,
         admin_name=admin.full_name,
         action=f"Created student {new_user.first_name} {new_user.last_name}",
@@ -138,7 +137,6 @@ async def create_ic_card(card: ICCardCreate):
         raise HTTPException(400, "UID already exists")
 
     ic = ICCard(
-        card_id=generate_id(),
         uid=card.uid.strip().lower(),
         student_id=card.student_id,
         status=card.status,
@@ -208,7 +206,6 @@ async def create_purchase(p: PurchaseCreate):
             await student.save(session=session)
 
             purchase = Purchase(
-                purchase_id=generate_id(),
                 student_id=p.student_id,
                 shelf_id=p.shelf_id,
                 price=price,
@@ -249,7 +246,6 @@ async def create_payment(p: PaymentCreate):
                     return existing
             
             payment = Payment(
-                payment_id=generate_id(),
                 student_id=p.student_id,
                 amount_paid=amount,
                 status=PaymentStatus.completed,
@@ -271,7 +267,6 @@ async def list_payments():
 @app.post("/system_settings/", response_model=SystemSettingOut)
 async def create_or_update_system_setting(s: SystemSettingCreate, admin: TokenData = Depends(get_current_admin)):
     now = datetime.now(timezone.utc)
-    generated_log_id = generate_id()
     
     setting = await SystemSetting.find_one(SystemSetting.key == s.key)
 
@@ -284,7 +279,6 @@ async def create_or_update_system_setting(s: SystemSettingCreate, admin: TokenDa
         action_msg = f"Created new setting {s.key} with value {s.value}"
 
     await AdminLog(
-        log_id=generated_log_id,
         admin_id=admin.id,
         admin_name=admin.full_name,
         action=action_msg,
@@ -316,7 +310,6 @@ async def card_scan(scan: ScanRequest):
                 print(">>> Updated existing unlinked card.")
             else:
                 new_card = ICCard(
-                    card_id=generate_id(),
                     uid=uid.strip().lower(),
                     student_id=None, 
                     status=ICCardStatus.active,
@@ -383,7 +376,6 @@ async def card_scan(scan: ScanRequest):
             await student.save(session=session)
 
             new_purchase = Purchase(
-                purchase_id=generate_id(),  
                 student_id=student.student_id,
                 shelf_id=shelf.shelf_id,
                 price=price,
@@ -440,7 +432,6 @@ async def register_card(data: CardRegistrationRequest, admin: TokenData = Depend
                 await card.save(session=session)
             else:
                 await ICCard(
-                    card_id=generate_id(),
                     uid=data.uid.strip().lower(),
                     student_id=data.student_id,
                     status=ICCardStatus.active,
@@ -449,7 +440,6 @@ async def register_card(data: CardRegistrationRequest, admin: TokenData = Depend
                 ).insert(session=session) 
 
             await AdminLog(
-                log_id=generate_id(),
                 admin_id=admin.id,
                 admin_name=admin.full_name,
                 action=f"Linked card {data.uid} to student {data.student_id}",
@@ -458,7 +448,7 @@ async def register_card(data: CardRegistrationRequest, admin: TokenData = Depend
                 created_at=now
             ).insert(session=session) 
 
-    return {"message": f"Card {data.uid} linked to student {data.student_id} by {admin.admin_name}"}
+    return {"message": f"Card {data.uid} linked to student {data.student_id} by {admin.full_name}"}
 
 
 @app.get("/get_captured_card/")
@@ -472,7 +462,7 @@ async def get_captured_card():
 
 
 @app.post("/deactivate_card/")
-async def deactivate_card(uid: str, admin: AdminSession = Depends(get_current_admin)):
+async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin)):
     client = User.get_pymongo_collection().database.client
     now = datetime.now(timezone.utc)
     
@@ -490,9 +480,8 @@ async def deactivate_card(uid: str, admin: AdminSession = Depends(get_current_ad
             await card.save(session=session)
 
             await AdminLog(
-                log_id=generate_id(),
-                admin_id=admin.admin_id,
-                admin_name=admin.admin_name,
+                admin_id=admin.id,
+                admin_name=admin.full_name,
                 action=f"Deactivated card {uid}",
                 target=f"Disconnected from Student: {old_id}",
                 targeted_student_id=old_id,

@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Optional, List
 from models import UserStatus, PurchaseStatus, ICCardStatus, PaymentStatus, AdminRole
+from beanie import PydanticObjectId
 
 class UserCreate(BaseModel):
     student_id: int 
@@ -24,7 +25,7 @@ class AdminCreate(BaseModel):
 
 
 class AdminOut(BaseModel):
-    admin_id: int 
+    id: PydanticObjectId 
     first_name: str
     last_name: str
     role: AdminRole
@@ -36,7 +37,7 @@ class PurchaseCreate(BaseModel):
     shelf_id: str 
 
 class PurchaseOut(PurchaseCreate):
-    purchase_id: int
+    id: PydanticObjectId
     price: int
     status: PurchaseStatus
     created_at: datetime
@@ -49,7 +50,7 @@ class PaymentCreate(BaseModel):
     idempotency_key: Optional[str] = None
 
 class PaymentOut(PaymentCreate):
-    payment_id: int
+    id: PydanticObjectId
     status: PaymentStatus
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
@@ -60,20 +61,18 @@ class ICCardCreate(BaseModel):
     status : ICCardStatus = ICCardStatus.active
 
 class ICCardOut(ICCardCreate):
-    card_id: Optional[int] = None 
+    id: PydanticObjectId
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
-class AdminLogCreate(BaseModel): 
+class AdminLogOut(BaseModel):
+    id: PydanticObjectId
     admin_id: int 
     admin_name: str
     action: str
     target: Optional[str] = None
     targeted_student_id: Optional[int] = None 
-
-class AdminLogOut(AdminLogCreate):
-    log_id: int
     created_at: datetime 
     model_config = ConfigDict(from_attributes=True)
 
@@ -83,6 +82,7 @@ class ShelfCreate(BaseModel):
     price: int = 0
 
 class ShelfOut(ShelfCreate):
+    id: PydanticObjectId
     created_at: datetime
     updated_at: datetime 
     model_config = ConfigDict(from_attributes=True)
@@ -92,6 +92,7 @@ class SystemSettingCreate(BaseModel):
     value: str
 
 class SystemSettingOut(SystemSettingCreate):
+    id: PydanticObjectId
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -114,7 +115,7 @@ class AdminLogin(BaseModel):
     password: str
 
 class AdminSession(BaseModel):
-    admin_id: int
+    admin_id: PydanticObjectId
     admin_name: str
 
 class UsersOut(BaseModel):

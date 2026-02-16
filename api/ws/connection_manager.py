@@ -23,9 +23,7 @@ class ConnectionManager:
         return self.__tablet_connection is not None
     
     async def disconnect_tablet(self):
-        if self.__tablet_connection:
-            await self.__tablet_connection.close()
-            self.__tablet_connection = None
+        self.__tablet_connection = None
 
     async def send_payload_to_tablet(self, payload: WSSchema):
         if self.__tablet_connection:

@@ -5,12 +5,12 @@ on:
     branches: [main]
     paths:
       - "api/**"
-      - ".github/workflows/api-api-test.yaml"
+      - ".github/workflows/api-test.yaml"
   pull_request:
     branches: [main]
     paths:
       - "api/**"
-      - ".github/workflows/api-api-test.yaml"
+      - ".github/workflows/api-test.yaml"
 
 defaults:
   run:
@@ -30,20 +30,20 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.14"
+          python-version: "3.12"
 
       - name: Initialise container
         run: |
           docker compose -f docker-compose.test.yaml up -d
-          sleep 10 # Wait for the container to be ready
+          sleep 20 # Wait for the container to be ready
       
       - name: Initalise Python
         uses: actions/setup-python@v6 
         with:
-          python-version: "3.14.2"
+          python-version: "3.12"
 
       - name: Run tests
         run: |
           pip install -r requirements.txt
           echo "Running tests"
-          pytest e2e/ -v --tb=short
+          pytest e2e/ -v --tb=short 

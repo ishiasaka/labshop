@@ -3,7 +3,7 @@ import session from 'express-session';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const FASTAPI_BASE = 'http://127.0.0.1:8001'; // <-- your API port
+const FASTAPI_BASE = 'http://127.0.0.1:8000';
 const PORT = 3000;
 
 const app = express();
@@ -22,7 +22,7 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: false, // set true only if https
+      secure: false,
     },
   })
 );
@@ -30,17 +30,17 @@ app.use(
 app.use(express.static(path.join(__dirname, 'public')));
 
 function requireAuth(req, res, next) {
-  if (req.session?.admin?.admin_id) return next();
+  if (req.session?.admin?.token) return next();
   return res.redirect('/login');
 }
 
 function requireAuthApi(req, res, next) {
-  if (req.session?.admin?.admin_id) return next();
+  if (req.session?.admin?.token) return next();
   return res.status(401).json({ detail: 'Not logged in' });
 }
 
 app.get('/', (req, res) => {
-  if (req.session?.admin?.admin_id) return res.redirect('/admin');
+  if (req.session?.admin?.token) return res.redirect('/admin');
   return res.redirect('/login');
 });
 
@@ -65,15 +65,18 @@ app.post('/login', async (req, res) => {
       body: JSON.stringify({ username, password }),
     });
 
-    if (!r.ok) {
-      return res.status(401).json({ detail: 'Invalid credentials' });
-    }
+    const data = await r.json().catch(() => null);
 
-    const data = await r.json();
+    if (!r.ok) {
+      return res
+        .status(r.status)
+        .json(data ?? { detail: 'Invalid credentials' });
+    }
 
     req.session.admin = {
       admin_id: data.admin_id,
       admin_name: data.full_name,
+      token: data.token,
     };
 
     return res.json({ ok: true });
@@ -91,23 +94,22 @@ app.post('/logout', (req, res) => {
 });
 
 app.get('/api/me', requireAuthApi, (req, res) => {
-  res.json(req.session.admin);
+  res.json({
+    admin_id: req.session.admin.admin_id,
+    admin_name: req.session.admin.admin_name,
+  });
 });
 
 app.use('/api', requireAuthApi, async (req, res) => {
   try {
     const url = `${FASTAPI_BASE}${req.originalUrl.replace(/^\/api/, '')}`;
 
-    const admin = req.session.admin;
-    const headers = {
-      ...req.headers,
-      'admin-id': String(admin.admin_id),
-      'admin-name': String(admin.admin_name),
-    };
+    const token = req.session.admin.token;
 
-    delete headers.host;
-    delete headers.connection;
-    delete headers['content-length'];
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
 
     const options = {
       method: req.method,
@@ -116,13 +118,13 @@ app.use('/api', requireAuthApi, async (req, res) => {
 
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       options.body = JSON.stringify(req.body ?? {});
-      options.headers['Content-Type'] = 'application/json';
     }
 
     const r = await fetch(url, options);
 
     const contentType = r.headers.get('content-type') || '';
     res.status(r.status);
+
     if (contentType.includes('application/json')) {
       const j = await r.json();
       return res.json(j);

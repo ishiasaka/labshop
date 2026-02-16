@@ -105,3 +105,12 @@ th {
   background: #fff;
   border: 1px solid #ddd;
 }
+.purchase {
+  color: #d9534f;
+  font-weight: bold;
+}
+
+.payment {
+  color: #28a745;
+  font-weight: bold;
+}

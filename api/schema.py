@@ -107,7 +107,6 @@ class ScanRequest(BaseModel):
     
 
 class CardRegistrationRequest(BaseModel): 
-    uid: str
     student_id: int
 
 class AdminLogin(BaseModel):

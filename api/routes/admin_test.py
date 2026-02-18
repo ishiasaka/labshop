@@ -17,7 +17,7 @@ TEST_SECRET_KEY = "012588c4754cdeca76c13d53146033cba0717e9df6d9d9cb43a04b9641d57
 
 
 
-class TestAuth:
+class TestAdminLogin:
     @pytest_asyncio.fixture(autouse=True)
     async def test_setup(self,mocker: MockerFixture):
         mocker.patch("services.auth.SECRET_KEY", TEST_SECRET_KEY)

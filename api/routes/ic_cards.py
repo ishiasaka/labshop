@@ -4,6 +4,7 @@ from schema import ICCardCreate
 from datetime import datetime, timezone
 from models import AdminLog, ICCard, Purchase, User, Shelf, SystemSetting
 from services.ws import ws_connection_manager, WSSchema
+
 from schema import CardRegistrationRequest, ICCardStatus, PurchaseStatus, ScanRequest
 from services.auth import get_current_admin, TokenData
 
@@ -134,9 +135,6 @@ async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin
 async def card_scan(scan: ScanRequest):
     uid = scan.normalized_uid
     usb_port = scan.usb_port
-
-    if usb_port is None:
-        raise HTTPException(400, "usb_port missing or unknown")
 
     now = scan.timestamp or datetime.now(timezone.utc)
     card = await ICCard.find_one(ICCard.uid == uid)

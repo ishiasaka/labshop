@@ -5,18 +5,18 @@ from unittest.mock import AsyncMock, MagicMock
 from mongomock_motor import AsyncMongoMockClient
 from models import User, ICCard, AdminLog
 from beanie import PydanticObjectId, init_beanie
-from schema import ICCardCreate, ICCardStatus, CardRegistrationRequest
+from schema import ICCardCreate, ICCardStatus, CardRegistrationRequest, ScanRequest
 from services.auth import TokenData
 from fastapi import HTTPException
-from routes.ic_cards import register_card
-from routes.ic_cards import create_ic_card
+from routes.ic_cards import register_card, create_ic_card, card_scan
+from services.ws import ConnectionManager, WSSchema
 
 
 
 
 
 class TestCreateICCard:
-    @pytest_asyncio.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True, scope="function")
     async def test_setup(self,mocker: MockerFixture):
         
         client = AsyncMongoMockClient()
@@ -247,6 +247,49 @@ class TestRegisterCard:
     
 
 
+@pytest.mark.asyncio
+class TestICCardScan:
+    @pytest_asyncio.fixture(autouse=True, scope="function")
+    async def test_setup(self,mocker: MockerFixture):
+        
+        client = AsyncMongoMockClient()
+        await init_beanie(database=client.get_database("labshop_test"), document_models=[User, ICCard]) # type: ignore
+
+    async def test_admin_port_exist_ic_card_and_student(self, mocker: MockerFixture):
+        """
+        Simulate scanning an IC card on an admin USB port, where the card exists and is linked to a student.
+        Expectation: Trigger payback to student and log the transaction.
+        """
+        req = ScanRequest(idm="testuid123", usb_port=5) # Now 5 is an admin port
+        iccard = ICCard(uid="testuid123", student_id=1, status=ICCardStatus.active)
+
+        iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
+        iccard_findone_mock.return_value = iccard
+
+        ws_send_payback_mock = mocker.patch.object(ConnectionManager, "send_payload_to_tablet", autospec=True)
+
+        user_findone_mock = mocker.patch.object(User, "find_one", new_callable=mocker.AsyncMock)
+        user_findone_mock.return_value = User(student_id=1, first_name="Test", last_name="Student", account_balance=100)
+
+        res = await card_scan(req)
+
+        ws_call_arg: WSSchema = ws_send_payback_mock.call_args[0][1]  # Get the positional arguments of the call
+        assert isinstance(ws_call_arg, WSSchema)  # First argument should be the student_id as a string
+        assert ws_call_arg.action == "PAY_BACK"
+        assert ws_call_arg.student_id == "1"
+        assert ws_call_arg.student_name == "Test"
+        assert ws_call_arg.debt_amount == 100
 
 
-    
+        
+        
+        ws_send_payback_mock.assert_called_once()
+
+        assert res["status"] == "identified"
+        assert res["name"] == user_findone_mock.return_value.first_name
+        assert res["student_id"] == user_findone_mock.return_value.student_id
+
+
+        
+
+

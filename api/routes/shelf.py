@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 router = APIRouter(prefix="/shelves")
 
-@router.post("/shelves/", response_model=ShelfOut)
+@router.post("/", response_model=ShelfOut)
 async def create_shelf(s: ShelfCreate):
     now = datetime.now(timezone.utc)
     if await Shelf.find_one(Shelf.shelf_id == s.shelf_id):
@@ -22,6 +22,6 @@ async def create_shelf(s: ShelfCreate):
     await shelf.insert()
     return shelf
 
-@router.get("/shelves/")
+@router.get("/")
 async def list_shelves():
     return {"shelves": await Shelf.find().to_list()}

@@ -32,6 +32,7 @@ from routes.purchase import router as PurchaseRouter
 from routes.shelf import router as ShelfRouter
 from routes.user import router as UserRouter
 from routes.websocket import router as WebsocketRouter
+from routes.setting import router as SettingRouter
 
 from services.auth import get_current_admin, TokenData
 
@@ -82,8 +83,10 @@ app.include_router(ICCardRouter)
 app.include_router(PaymentRouter)
 app.include_router(PurchaseRouter)
 app.include_router(ShelfRouter)
+app.include_router(SettingRouter)
 app.include_router(UserRouter)
 app.include_router(WebsocketRouter)
+
 
 
 @app.get("/")

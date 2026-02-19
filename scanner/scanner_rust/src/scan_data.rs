@@ -37,7 +37,7 @@ fn usb_port_to_int(port: &str) -> Option<u32> {
 }
 
 const SOUND_OK: &str = "/usr/local/share/sounds/paypay.mp3";
-const SOUND_ERR: &str = "/usr/local/share/sounds/error.wav";
+const SOUND_ERR: &str = "/usr/local/share/sounds/error.mp3";
 
 /// Play a sound file in a background thread (non-blocking).
 pub fn play_sound(path: &'static str) {

@@ -69,7 +69,7 @@ RUN ln -sf libpafe.so.0.0.7 /usr/local/lib/libpafe.so.0 \
 
 # Copy sound files
 COPY src/paypay.mp3 /usr/local/share/sounds/paypay.mp3
-COPY src/error.wav /usr/local/share/sounds/error.wav
+COPY src/error.mp3 /usr/local/share/sounds/error.mp3
 
 # Copy the built binary
 COPY --from=rust-builder /build/target/release/felica_scanner /usr/local/bin/felica_scanner

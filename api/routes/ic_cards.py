@@ -102,7 +102,7 @@ async def register_card(uid: str, data: CardRegistrationRequest, admin: TokenDat
 
     return {"message": f"Card {uid} linked to student {data.student_id} by {admin.full_name}"}
 
-@router.post("{uid}/deactivate", description="Deactivate an IC card")
+@router.post("/{uid}/deactivate", description="Deactivate an IC card")
 async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin)):
     client = User.get_pymongo_collection().database.client
     now = datetime.now(timezone.utc)

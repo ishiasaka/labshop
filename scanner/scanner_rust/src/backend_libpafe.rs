@@ -123,7 +123,7 @@ pub fn run_libpafe_loop() {
                         idm_str,
                         usb_port.as_deref().unwrap_or("Unknown")
                     );
-                    post_scan_data(&idm_str, usb_port);
+                    post_scan_data(&idm_str, usb_port, "RC-S320");
 
                     last_idm = idm;
                     last_read_time = Some(Instant::now());

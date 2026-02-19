@@ -78,6 +78,6 @@ COPY --from=rust-builder /build/target/release/felica_scanner /usr/local/bin/fel
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-ENV API_URL=http://host.docker.internal:8000/api/scan
+ENV API_URL=http://host.docker.internal:8000/ic_cards/scan
 
 ENTRYPOINT ["/entrypoint.sh"]

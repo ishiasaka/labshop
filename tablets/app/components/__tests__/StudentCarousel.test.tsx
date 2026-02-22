@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import StudentCarousel from '../StudentCarousel';
 import { LanguageProvider } from '../../context/LanguageContext';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import '@testing-library/jest-dom';
 
 describe('StudentCarousel', () => {
@@ -42,5 +43,18 @@ describe('StudentCarousel', () => {
       </LanguageProvider>
     );
     expect(container).toMatchSnapshot();
+  });
+
+  it('renders correctly in dark mode (background branch)', () => {
+    const darkTheme = createTheme({ palette: { mode: 'dark' } });
+    render(
+      <LanguageProvider>
+        <ThemeProvider theme={darkTheme}>
+          <StudentCarousel />
+        </ThemeProvider>
+      </LanguageProvider>
+    );
+    // Carousel still renders student names in dark mode
+    expect(screen.getAllByText('Alice Johnson')[0]).toBeInTheDocument();
   });
 });

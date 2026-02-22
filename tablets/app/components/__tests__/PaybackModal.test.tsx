@@ -152,4 +152,27 @@ describe('PaybackModal', () => {
       expect(mockOnClose).not.toHaveBeenCalled();
     }
   });
+
+  it('returns to preset view when "Back to Presets" is clicked', () => {
+    render(
+      <LanguageProvider>
+        <PaybackModal
+          open={true}
+          onClose={mockOnClose}
+          userData={mockUserData}
+        />
+      </LanguageProvider>
+    );
+
+    // Open the custom-amount input
+    fireEvent.click(screen.getByText('Other Amount'));
+    expect(screen.getByPlaceholderText('Enter amount')).toBeInTheDocument();
+
+    // Go back to presets
+    fireEvent.click(screen.getByText('Back to presets'));
+
+    // Preset buttons should be visible again
+    expect(screen.getByText('¥100')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Enter amount')).toBeNull();
+  });
 });

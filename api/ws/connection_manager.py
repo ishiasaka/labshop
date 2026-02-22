@@ -1,5 +1,6 @@
 from fastapi import WebSocket
-from typing import Dict, Dict
+from typing import Dict
+from ws.ws_schema import WSSchema
 
 
 class ConnectionManager:
@@ -22,13 +23,11 @@ class ConnectionManager:
         return self.__tablet_connection is not None
     
     async def disconnect_tablet(self):
-        if self.__tablet_connection:
-            await self.__tablet_connection.close()
-            self.__tablet_connection = None
+        self.__tablet_connection = None
 
-    async def send_payload_to_tablet(self, payload: Dict):
+    async def send_payload_to_tablet(self, payload: WSSchema):
         if self.__tablet_connection:
-            await self.__tablet_connection.send_json(payload)
+            await self.__tablet_connection.send_json(payload.model_dump())
             return
         raise ConnectionError("No tablet connected")
 

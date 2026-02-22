@@ -10,13 +10,15 @@ services:
       - .:/app
     environment:
       ENV: e2e
-  
+      MONGODB_URL: mongodb://db:27017
+      MONGODB_DB: labshop_ci
+
   db:
     image: mongo:8.2.4-noble
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
-    
+
 volumes:
   mongo-data:

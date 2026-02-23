@@ -11,15 +11,22 @@ services:
       - .:/app
     environment:
       ENV: e2e
+      SECRET_KEY: ${SECRET_KEY}
       MONGODB_URL: mongodb://db:27017
       MONGODB_DB: labshop
-  
+
   db:
     image: mongo:8.2.4-noble
     ports:
       - "27017:27017"
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    healthcheck:
+      test: mongosh --port 27017 --eval "rs.status().ok || rs.initiate({_id:'rs0',members:[{_id:0,host:'db:27017'}]})"
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - mongo-data:/data/db
-    
+
 volumes:
   mongo-data:

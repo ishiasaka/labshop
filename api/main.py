@@ -4,7 +4,7 @@ from fastapi import FastAPI, Body, HTTPException, Header, Depends
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone
-from beanie import init_beanie
+from beanie import PydanticObjectId, init_beanie
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 import bcrypt
@@ -24,30 +24,28 @@ from schema import (
     SystemSettingCreate, SystemSettingOut,
     ScanRequest, CardRegistrationRequest
 )
-from routes.websocket import router as WebsocketRouter
+
 from routes.admin import router as AdminRouter
+from routes.ic_cards import router as ICCardRouter
+from routes.payment import router as PaymentRouter
+from routes.purchase import router as PurchaseRouter
+from routes.shelf import router as ShelfRouter
+from routes.user import router as UserRouter
+from routes.websocket import router as WebsocketRouter
+from routes.setting import router as SettingRouter
+
 from services.auth import get_current_admin, TokenData
 
-load_dotenv()
 
-def generate_id():
-    return int(datetime.now(timezone.utc).timestamp() * 1000000)
 
-MONGODB_URL = os.getenv("MONGODB_URL")
-MONGODB_DB = os.getenv("MONGODB_DB")
-
-if not MONGODB_URL or not MONGODB_DB:
-    raise RuntimeError("MONGODB_URL or MONGODB_DB is not set")
-
-# async def get_current_admin(
-#     admin_id: str = Header(..., alias="admin-id"),
-#     admin_name: str = Header(..., alias="admin-name")
-# ) -> AdminSession: 
-#     return AdminSession(admin_id=int(admin_id), admin_name=admin_name)
 
 
 async def init_db():
+    MONGODB_URL = os.getenv("MONGODB_URL")
+    MONGODB_DB = os.getenv("MONGODB_DB")
 
+    if not MONGODB_URL or not MONGODB_DB:
+        raise RuntimeError("MONGODB_URL or MONGODB_DB is not set")
     client = AsyncIOMotorClient(MONGODB_URL)
     await init_beanie(
         database=client[MONGODB_DB],
@@ -58,6 +56,7 @@ async def init_db():
     )
     return client
 
+load_dotenv()
 # 3. Lifespan manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -79,420 +78,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(AdminRouter)
+app.include_router(ICCardRouter)
+app.include_router(PaymentRouter)
+app.include_router(PurchaseRouter)
+app.include_router(ShelfRouter)
+app.include_router(SettingRouter)
+app.include_router(UserRouter)
 app.include_router(WebsocketRouter)
+
+
 
 @app.get("/")
 def root():
     return {"message": "Labshop API is running"}
-
-app.include_router(AdminRouter)
-
-@app.post("/users/", response_model=UserOut)
-async def create_user(
-    user: UserCreate,
-    admin: TokenData = Depends(get_current_admin),
-):
-    now = datetime.now(timezone.utc)
-
-    if await User.find_one(User.student_id == user.student_id):
-        raise HTTPException(status_code=400, detail="Student ID already exists")
-
-    new_user = User(
-        student_id=user.student_id,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        account_balance=0,
-        status=UserStatus.active,
-        created_at=now,
-        updated_at=now,
-    )
-    await new_user.insert()
-
-    await AdminLog(
-        admin_id=admin.id,
-        admin_name=admin.full_name,
-        action=f"Created student {new_user.first_name} {new_user.last_name}",
-        target=f"Student {new_user.student_id}",
-        targeted_student_id=new_user.student_id,
-        created_at=now,
-    ).insert()
-
-    return new_user
-
-
-@app.get("/users/", response_model=UsersOut)
-async def list_users():
-    return {"users": await User.find().to_list()}
-
-
-@app.post("/ic_cards/", response_model=ICCardOut)
-async def create_ic_card(card: ICCardCreate):
-    now = datetime.now(timezone.utc)
-
-    if card.student_id:
-        if not await User.find_one(User.student_id == card.student_id):
-            raise HTTPException(400, "Student does not exist")
-
-    if await ICCard.find_one(ICCard.uid == card.uid):
-        raise HTTPException(400, "UID already exists")
-
-    ic = ICCard(
-        uid=card.uid.strip().lower(),
-        student_id=card.student_id,
-        status=card.status,
-        created_at=now,
-        updated_at=now
-    )
-    await ic.insert()
-    return ic
-
-
-@app.post("/shelves/", response_model=ShelfOut)
-async def create_shelf(s: ShelfCreate):
-    now = datetime.now(timezone.utc)
-    if await Shelf.find_one(Shelf.shelf_id == s.shelf_id):
-        raise HTTPException(400, "Shelf already exists")
-
-    shelf = Shelf(
-        shelf_id=s.shelf_id,
-        usb_port=s.usb_port,
-        price=s.price,
-        created_at=now,
-        updated_at=now
-    )
-    await shelf.insert()
-    return shelf
-
-@app.get("/shelves/")
-async def list_shelves():
-    return {"shelves": await Shelf.find().to_list()}
-
-
-@app.post("/purchases/", response_model=PurchaseOut)
-async def create_purchase(p: PurchaseCreate):
-    now = datetime.now(timezone.utc)
-
-    client = Purchase.get_pymongo_collection().database.client
-    
-    async with await client.start_session() as session:
-        async with session.start_transaction():
-
-            student = await User.find_one(
-                User.student_id == p.student_id,
-                session=session
-            )
-            if not student:
-                raise HTTPException(400, "Student does not exist")
-
-            shelf = await Shelf.find_one(
-                Shelf.shelf_id == p.shelf_id,
-                session=session
-            )
-            if not shelf:
-                raise HTTPException(400, "Shelf does not exist")
-
-            price = shelf.price
-            limit_doc = await SystemSetting.find_one(
-                SystemSetting.key == "max_debt_limit",
-                session=session
-            )
-            max_limit = int(limit_doc.value) if limit_doc else 2000
-
-            if student.account_balance + price > max_limit:
-                raise HTTPException(400, "Debt limit reached")
-
-            student.account_balance += price
-            student.updated_at = now
-            await student.save(session=session)
-
-            purchase = Purchase(
-                student_id=p.student_id,
-                shelf_id=p.shelf_id,
-                price=price,
-                status=PurchaseStatus.completed,
-                created_at=now,
-            )
-
-            await purchase.insert(session=session)
-
-            return purchase
-
-@app.get("/purchases/", response_model=PurchasesOut)
-async def list_purchases():
-    return {"purchases": await Purchase.find().to_list()}
-
-
-@app.post("/payments/", response_model=PaymentOut)
-async def create_payment(p: PaymentCreate):
-    now = datetime.now(timezone.utc)
-    
-    client = User.get_pymongo_collection().database.client
-    
-    async with await client.start_session() as session:
-        async with session.start_transaction():
-            student = await User.find_one(User.student_id == p.student_id, session=session)
-            if not student:
-                raise HTTPException(404, "Student not found")
-
-            amount = int(p.amount_paid)
-            if amount <= 0:
-                raise HTTPException(400, "Payment amount must be greater than zero.")
-            if student.account_balance < amount:
-                raise HTTPException(400, "Your debt is less than what you want to pay")
-
-            if p.idempotency_key:
-                existing = await Payment.find_one(Payment.idempotency_key == p.idempotency_key, session=session)
-                if existing:
-                    return existing
-            
-            payment = Payment(
-                student_id=p.student_id,
-                amount_paid=amount,
-                status=PaymentStatus.completed,
-                idempotency_key=p.idempotency_key,
-                created_at=now,
-            )
-
-            await payment.insert(session=session)
-            # Deduct the amount from student's balance
-            student.account_balance -= amount
-            await student.save(session=session)
-            return payment
-
-@app.get("/payments/", response_model=PaymentsOut)
-async def list_payments():
-    return {"payments": await Payment.find().to_list()}
-
-
-@app.post("/system_settings/", response_model=SystemSettingOut)
-async def create_or_update_system_setting(s: SystemSettingCreate, admin: TokenData = Depends(get_current_admin)):
-    now = datetime.now(timezone.utc)
-    
-    setting = await SystemSetting.find_one(SystemSetting.key == s.key)
-
-    if setting:
-        await setting.set({SystemSetting.value: s.value, SystemSetting.updated_at: now})
-        action_msg = f"Updated {s.key} to {s.value}"
-    else:
-        setting = SystemSetting(key=s.key, value=s.value, updated_at=now)
-        await setting.insert()
-        action_msg = f"Created new setting {s.key} with value {s.value}"
-
-    await AdminLog(
-        admin_id=admin.id,
-        admin_name=admin.full_name,
-        action=action_msg,
-        target="System Settings",
-        created_at=now
-    ).insert()
-
-    return setting
-
-@app.post("/api/scan")
-async def card_scan(scan: ScanRequest):
-    uid = scan.normalized_uid
-    usb_port = scan.usb_port
-
-    if usb_port is None:
-        raise HTTPException(400, "usb_port missing or unknown")
-
-    now = scan.timestamp or datetime.now(timezone.utc)
-    card = await ICCard.find_one(ICCard.uid == uid)
-    
-    ADMIN_PORT = 5
-
-    if usb_port == ADMIN_PORT:
-        print(f">>> ADMIN MODE ACTIVATED ON PORT [{usb_port}] FOR UID: {uid}")
-        
-        if not card or card.student_id is None:
-            if card:
-                await card.set({ICCard.updated_at: now})
-                print(">>> Updated existing unlinked card.")
-            else:
-                new_card = ICCard(
-                    uid=uid.strip().lower(),
-                    student_id=None, 
-                    status=ICCardStatus.active,
-                    created_at=now,
-                    updated_at=now
-                )
-                await new_card.insert()
-                print(">>> Successfully inserted NEW card to DB.")
-            return {"status": "new_card", "message": "Card captured. Register in Admin."}
-
-        student = await User.find_one(User.student_id == card.student_id)
-        if not student:
-            return {"status": "error", "message": "Student record missing."}
-
-        await ws_connection_manager.send_payload_to_tablet(WSSchema(
-            action="PAY_BACK",
-            student_id=str(student.student_id),
-            student_name=student.first_name,
-            debt_amount=student.account_balance
-        ))
-        return {
-            "status": "identified",
-            "name": student.first_name,
-            "student_id": student.student_id,
-            "message": f"Hi {student.first_name}, choose payment amount."
-        }
-
-    if not card or card.student_id is None:
-        raise HTTPException(404, "Card not registered to a student")
-    
-    if card.status != ICCardStatus.active:
-        raise HTTPException(403, "Card is not active")
-
-    client = User.get_pymongo_collection().database.client
-    
-    async with await client.start_session() as session:
-        async with session.start_transaction():
-            
-            student = await User.find_one(User.student_id == card.student_id, session=session)
-            if not student:
-                raise HTTPException(404, "Student record not found")
-
-            shelf = await Shelf.find_one(Shelf.usb_port == usb_port, session=session)
-            if not shelf:
-                raise HTTPException(404, f"Shelf on USB port {usb_port} not found")
-
-            price = shelf.price
-            limit_doc = await SystemSetting.find_one(SystemSetting.key == "max_debt_limit", session=session)
-            max_limit = int(limit_doc.value) if limit_doc else 2000
-            
-            if student.account_balance + price > max_limit:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "error_code": "LIMIT_REACHED",
-                        "message": "Debt limit reached",
-                        "current_debt": student.account_balance
-                    }
-                )
-
-            # Update Student Balance
-            student.account_balance += price
-            student.updated_at = now
-            await student.save(session=session)
-
-            new_purchase = Purchase(
-                student_id=student.student_id,
-                shelf_id=shelf.shelf_id,
-                price=price,
-                status=PurchaseStatus.completed,
-                created_at=now
-            )
-            await new_purchase.insert(session=session)
-
-            return {
-                "status": "success",
-                "student_name": student.first_name,
-                "amount_charged": price,
-                "new_balance": student.account_balance
-            }
-
-
-@app.post("/register_card/")
-async def register_card(data: CardRegistrationRequest, admin: TokenData = Depends(get_current_admin)):
-
-    student = await User.find_one(User.student_id == data.student_id)
-    if not student:
-        raise HTTPException(404, "Student not found")
-    
-    existing_card = await ICCard.find_one(
-        ICCard.student_id == data.student_id, 
-        ICCard.status == ICCardStatus.active,
-        ICCard.uid != data.uid  
-    )
-    if existing_card:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Student {data.student_id} already has an active card (UID: {existing_card.uid})"
-        )
-
-    now = datetime.now(timezone.utc)
-
-    client = User.get_pymongo_collection().database.client
-    
-    async with await client.start_session() as session:
-        async with session.start_transaction():
-            card = await ICCard.find_one(ICCard.uid == data.uid, session=session)
-
-            if card and card.status != ICCardStatus.active:
-                raise HTTPException(400, "Card is deactivated. Cannot link it.")
-            
-            if card:
-                if card.status == ICCardStatus.active and card.student_id is not None:
-                    raise HTTPException(
-                        status_code=400, 
-                        detail=f"Card {data.uid} is already linked to Student {card.student_id}"
-                    )
-                card.student_id = data.student_id
-                card.status = ICCardStatus.active
-                await card.save(session=session)
-            else:
-                await ICCard(
-                    uid=data.uid.strip().lower(),
-                    student_id=data.student_id,
-                    status=ICCardStatus.active,
-                    created_at=now,
-                    updated_at=now
-                ).insert(session=session) 
-
-            await AdminLog(
-                admin_id=admin.id,
-                admin_name=admin.full_name,
-                action=f"Linked card {data.uid} to student {data.student_id}",
-                target=f"Student: {student.first_name} {student.last_name}",
-                targeted_student_id=data.student_id,
-                created_at=now
-            ).insert(session=session) 
-
-    return {"message": f"Card {data.uid} linked to student {data.student_id} by {admin.full_name}"}
-
-
-@app.get("/get_captured_card/")
-async def get_captured_card():
-    card = await ICCard.find(
-        ICCard.student_id == None,
-        ICCard.status == ICCardStatus.active
-    ).sort(-ICCard.created_at).first_or_none()
-
-    return card
-
-
-@app.post("/deactivate_card/")
-async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin)):
-    client = User.get_pymongo_collection().database.client
-    now = datetime.now(timezone.utc)
-    
-    async with await client.start_session() as session:
-        async with session.start_transaction():
-
-            card = await ICCard.find_one(ICCard.uid == uid, session=session)
-            if not card:
-                raise HTTPException(404, "Card not found")
-
-            old_id = card.student_id
-
-            card.status = ICCardStatus.deactivated
-            card.student_id = None 
-            await card.save(session=session)
-
-            await AdminLog(
-                admin_id=admin.id,
-                admin_name=admin.full_name,
-                action=f"Deactivated card {uid}",
-                target=f"Disconnected from Student: {old_id}",
-                targeted_student_id=old_id,
-                created_at=now
-            ).insert(session=session)
-
-    return {"message": f"Card {uid} successfully deactivated and logged."}
-
-@app.get("/active_cards/")
-async def get_active_cards():
-
-    cards = await ICCard.find(ICCard.status == ICCardStatus.active).sort(-ICCard.created_at).to_list()
-    return cards
-

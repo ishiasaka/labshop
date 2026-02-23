@@ -4,12 +4,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: labshop-api:latest
     ports:
       - "8000:8000"
     volumes:
       - .:/app
     environment:
-      - ENV=development
+      ENV: e2e
+      MONGODB_URL: mongodb://db:27017
+      MONGODB_DB: labshop
   
   db:
     image: mongo:8.2.4-noble

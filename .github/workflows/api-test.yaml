@@ -17,6 +17,20 @@ defaults:
     working-directory: api
 
 jobs:
+  unit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: pytest -c pytest.unit.ini -v --tb=short
   e2e:
     runs-on: ubuntu-latest
 
@@ -46,4 +60,4 @@ jobs:
         run: |
           pip install -r requirements.txt
           echo "Running tests"
-          pytest e2e/ -v --tb=short 
+          pytest -c pytest.e2e.ini -v --tb=short 

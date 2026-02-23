@@ -41,6 +41,8 @@ async def create_admin_user(data: AdminCreate):
 async def admin_login(credentials: AdminLogin):
     admin = await Admin.find_one(Admin.username == credentials.username)
 
+    print(f"Admin found: {admin}")
+
     if not admin:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 

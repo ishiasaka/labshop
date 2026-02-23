@@ -56,10 +56,10 @@ async def init_db():
     )
     return client
 
+load_dotenv()
 # 3. Lifespan manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_dotenv()
     client = await init_db()
     print("Startup: Database initialized.")
     yield

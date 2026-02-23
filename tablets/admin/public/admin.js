@@ -1,4 +1,4 @@
-const API_PREFIX = '/api';
+const API_PREFIX = 'http://localhost:8000';
 const LOGIN_PAGE = '/login';
 
 function $(id) {
@@ -20,7 +20,7 @@ async function apiFetch(path, options = {}) {
 
 async function requireLogin() {
   try {
-    const res = await apiFetch('/me');
+    const res = await apiFetch('/');
     if (!res.ok) {
       window.location.href = LOGIN_PAGE;
       return false;

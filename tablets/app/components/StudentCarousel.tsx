@@ -23,7 +23,7 @@ const scroll = keyframes`
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(-100%);
   }
 `;
 
@@ -38,15 +38,18 @@ export default function StudentCarousel() {
     amountOwed: u.account_balance,
   }));
 
-  // Duplicate the list for seamless infinite scroll; use placeholder when empty
+  // Duplicate the list dynamically to ensure it is wide enough to cover the screen
   const NO_DATA_PLACEHOLDER: Student[] = Array.from({ length: 6 }, (_, i) => ({
     id: `no-data-${i}`,
     name: '—',
     amountOwed: -1, // sentinel: rendered as "No Data"
   }));
 
-  const baseStudents = students.length > 0 ? students : NO_DATA_PLACEHOLDER;
-  const displayedStudents = [...baseStudents, ...baseStudents];
+  let baseStudents = students.length > 0 ? students : NO_DATA_PLACEHOLDER;
+  // Ensure we have enough items so the width exceeds the screen (assume width of 6 is safe)
+  while (baseStudents.length > 0 && baseStudents.length < 6) {
+    baseStudents = [...baseStudents, ...students];
+  }
 
   if (loading) {
     return (
@@ -88,6 +91,8 @@ export default function StudentCarousel() {
     );
   }
 
+  const scrollAnimation = `${scroll} 20s linear infinite`;
+
   return (
     <Box
       sx={{
@@ -106,86 +111,173 @@ export default function StudentCarousel() {
       <Box
         sx={{
           display: 'flex',
-          gap: 4,
-          paddingX: 2,
-          animation: `${scroll} 60s linear infinite`,
           width: 'max-content',
-          '&:hover': {
+          '&:hover > div': {
             animationPlayState: 'paused',
           },
         }}
       >
-        {displayedStudents.map((student, index) => (
-          <Paper
-            key={`${student.id}-${index}`}
-            elevation={3}
-            sx={{
-              width: 300,
-              height: 400,
-              borderRadius: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              p: 4,
-              flexShrink: 0,
-              backgroundColor: 'background.paper',
-              transition: 'transform 0.3s ease',
-              '&:hover': {
-                transform: 'scale(1.05)',
-              },
-            }}
-          >
-            <Typography
-              variant="h4"
-              component="div"
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 4,
+            pr: 4,
+            animation: scrollAnimation,
+          }}
+        >
+          {baseStudents.map((student, index) => (
+            <Paper
+              key={`set1-${student.id}-${index}`}
+              elevation={3}
               sx={{
-                fontWeight: 600,
-                color: theme.palette.text.primary,
-                textAlign: 'center',
+                width: 300,
+                height: 400,
+                borderRadius: 4,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                p: 4,
+                flexShrink: 0,
+                backgroundColor: 'background.paper',
+                transition: 'transform 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                },
               }}
             >
-              {student.name}
-            </Typography>
+              <Typography
+                variant="h4"
+                component="div"
+                sx={{
+                  fontWeight: 600,
+                  color: theme.palette.text.primary,
+                  textAlign: 'center',
+                }}
+              >
+                {student.name}
+              </Typography>
 
-            <Box sx={{ textAlign: 'center' }}>
-              {student.amountOwed === -1 ? (
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontWeight: 700,
-                    color: theme.palette.text.disabled,
-                    letterSpacing: 2,
-                  }}
-                >
-                  {t('noData')}
-                </Typography>
-              ) : (
-                <>
+              <Box sx={{ textAlign: 'center' }}>
+                {student.amountOwed === -1 ? (
                   <Typography
-                    variant="h6"
-                    color="text.secondary"
-                    sx={{ mb: 1, fontWeight: 500 }}
-                  >
-                    {t('owedAmount')}
-                  </Typography>
-                  <Typography
-                    variant="h3"
+                    variant="h4"
                     sx={{
                       fontWeight: 700,
-                      color:
-                        student.amountOwed > 0
-                          ? theme.palette.error.main
-                          : theme.palette.success.main,
+                      color: theme.palette.text.disabled,
+                      letterSpacing: 2,
                     }}
                   >
-                    ${student.amountOwed.toFixed(2)}
+                    {t('noData')}
                   </Typography>
-                </>
-              )}
-            </Box>
-          </Paper>
-        ))}
+                ) : (
+                  <>
+                    <Typography
+                      variant="h6"
+                      color="text.secondary"
+                      sx={{ mb: 1, fontWeight: 500 }}
+                    >
+                      {t('owedAmount')}
+                    </Typography>
+                    <Typography
+                      variant="h3"
+                      sx={{
+                        fontWeight: 700,
+                        color:
+                          student.amountOwed > 0
+                            ? theme.palette.error.main
+                            : theme.palette.success.main,
+                      }}
+                    >
+                      ${student.amountOwed.toFixed(2)}
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            </Paper>
+          ))}
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 4,
+            pr: 4,
+            animation: scrollAnimation,
+          }}
+        >
+          {baseStudents.map((student, index) => (
+            <Paper
+              key={`set2-${student.id}-${index}`}
+              elevation={3}
+              sx={{
+                width: 300,
+                height: 400,
+                borderRadius: 4,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                p: 4,
+                flexShrink: 0,
+                backgroundColor: 'background.paper',
+                transition: 'transform 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                },
+              }}
+            >
+              <Typography
+                variant="h4"
+                component="div"
+                sx={{
+                  fontWeight: 600,
+                  color: theme.palette.text.primary,
+                  textAlign: 'center',
+                }}
+              >
+                {student.name}
+              </Typography>
+
+              <Box sx={{ textAlign: 'center' }}>
+                {student.amountOwed === -1 ? (
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 700,
+                      color: theme.palette.text.disabled,
+                      letterSpacing: 2,
+                    }}
+                  >
+                    {t('noData')}
+                  </Typography>
+                ) : (
+                  <>
+                    <Typography
+                      variant="h6"
+                      color="text.secondary"
+                      sx={{ mb: 1, fontWeight: 500 }}
+                    >
+                      {t('owedAmount')}
+                    </Typography>
+                    <Typography
+                      variant="h3"
+                      sx={{
+                        fontWeight: 700,
+                        color:
+                          student.amountOwed > 0
+                            ? theme.palette.error.main
+                            : theme.palette.success.main,
+                      }}
+                    >
+                      ${student.amountOwed.toFixed(2)}
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            </Paper>
+          ))}
+        </Box>
       </Box>
     </Box>
   );

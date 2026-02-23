@@ -22,6 +22,7 @@ import { usePayment } from '../hooks/usePayment';
 interface PaybackModalProps {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   userData: {
     name: string;
     id: string;
@@ -34,6 +35,7 @@ type PaymentStatus = 'idle' | 'processing' | 'success';
 export default function PaybackModal({
   open,
   onClose,
+  onSuccess,
   userData,
 }: PaybackModalProps) {
   const { language } = useLanguage();
@@ -63,6 +65,7 @@ export default function PaybackModal({
         amount_paid: amount,
       });
       setPaymentStatus('success');
+      if (onSuccess) onSuccess();
       setTimeout(() => {
         handleClose();
       }, 2000);

@@ -4,6 +4,7 @@ import ThemeToggle from '@/app/components/ThemeToggle';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 import PaybackModal from '@/app/components/PaybackModal';
 import { useWebSocket } from '@/app/hooks/useWebSocket';
+import { useUsers } from '@/app/hooks/useUsers';
 import { Box } from '@mui/material';
 import { useCallback, useState } from 'react';
 
@@ -25,6 +26,7 @@ function isPaybackPayload(data: unknown): data is PaybackPayload {
 
 export default function Home() {
   const [paybackData, setPaybackData] = useState<PaybackPayload | null>(null);
+  const { mutate } = useUsers();
 
   const handleWsMessage = useCallback((data: unknown) => {
     if (isPaybackPayload(data)) {
@@ -82,6 +84,7 @@ export default function Home() {
         <PaybackModal
           open={!!paybackData}
           onClose={() => setPaybackData(null)}
+          onSuccess={() => mutate()}
           userData={{
             name: paybackData.student_name,
             id: paybackData.student_id,

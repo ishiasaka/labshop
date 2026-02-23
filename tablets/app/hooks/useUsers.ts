@@ -26,7 +26,7 @@ export function useUsers() {
   const { language } = useLanguage();
   const t = translations[language];
 
-  const { data, error, isLoading } = useSWR<User[]>(
+  const { data, error, isLoading, mutate } = useSWR<User[]>(
     `${API_BASE_URL}/users/`,
     fetcher,
     { refreshInterval: REFRESH_INTERVAL_MS }
@@ -36,5 +36,6 @@ export function useUsers() {
     users: data ?? [],
     loading: isLoading,
     error: error ? t.users.fetchError : null,
+    mutate,
   };
 }

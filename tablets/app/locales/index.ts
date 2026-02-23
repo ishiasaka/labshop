@@ -5,6 +5,7 @@ export const translations = {
     studentIdPlaceholder: 'Enter Student ID',
     submit: 'Submit',
     owedAmount: 'Owed Amount',
+    noData: 'No Data',
     theme: {
       toggle: 'Toggle theme',
     },
@@ -28,6 +29,7 @@ export const translations = {
     studentIdPlaceholder: '学生証番号を入力',
     submit: '送信',
     owedAmount: '未払い金額',
+    noData: 'データなし',
     theme: {
       toggle: 'テーマ切り替え',
     },

@@ -6,6 +6,9 @@ export const translations = {
     submit: 'Submit',
     owedAmount: 'Owed Amount',
     noData: 'No Data',
+    users: {
+      fetchError: 'Failed to load students. Please try again.',
+    },
     theme: {
       toggle: 'Toggle theme',
     },
@@ -21,6 +24,7 @@ export const translations = {
       backToPresets: 'Back to presets',
       processing: 'Payment processing...',
       success: 'Payment Successful!',
+      error: 'Payment failed. Please try again.',
     },
   },
   ja: {
@@ -30,6 +34,9 @@ export const translations = {
     submit: '送信',
     owedAmount: '未払い金額',
     noData: 'データなし',
+    users: {
+      fetchError: '生徒の読み込みに失敗しました。もう一度お試しください。',
+    },
     theme: {
       toggle: 'テーマ切り替え',
     },
@@ -45,6 +52,7 @@ export const translations = {
       backToPresets: 'プリセットに戻る',
       processing: '支払い処理中...',
       success: '支払い完了！',
+      error: '支払いに失敗しました。もう一度お試しください。',
     },
   },
 };

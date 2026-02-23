@@ -1,5 +1,7 @@
 'use client';
 import useSWR from 'swr';
+import { useLanguage } from '../context/LanguageContext';
+import { translations } from '../locales';
 
 export interface User {
   student_id: number;
@@ -21,6 +23,9 @@ async function fetcher(url: string): Promise<User[]> {
 }
 
 export function useUsers() {
+  const { language } = useLanguage();
+  const t = translations[language];
+
   const { data, error, isLoading } = useSWR<User[]>(
     `${API_BASE_URL}/users/`,
     fetcher,
@@ -30,7 +35,6 @@ export function useUsers() {
   return {
     users: data ?? [],
     loading: isLoading,
-    error:
-      error instanceof Error ? error.message : error ? String(error) : null,
+    error: error ? t.users.fetchError : null,
   };
 }

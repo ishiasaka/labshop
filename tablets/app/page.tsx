@@ -8,18 +8,18 @@ import { Box } from '@mui/material';
 import { useCallback, useState } from 'react';
 
 interface PaybackPayload {
-  name: string;
-  id: string;
-  owedAmount: number;
+  student_name: string;
+  student_id: string;
+  debt_amount: number;
 }
 
 function isPaybackPayload(data: unknown): data is PaybackPayload {
   return (
     typeof data === 'object' &&
     data !== null &&
-    typeof (data as PaybackPayload).name === 'string' &&
-    typeof (data as PaybackPayload).id === 'string' &&
-    typeof (data as PaybackPayload).owedAmount === 'number'
+    typeof (data as PaybackPayload).student_name === 'string' &&
+    typeof (data as PaybackPayload).student_id === 'string' &&
+    typeof (data as PaybackPayload).debt_amount === 'number'
   );
 }
 
@@ -82,7 +82,11 @@ export default function Home() {
         <PaybackModal
           open={!!paybackData}
           onClose={() => setPaybackData(null)}
-          userData={paybackData}
+          userData={{
+            name: paybackData.student_name,
+            id: paybackData.student_id,
+            owedAmount: paybackData.debt_amount,
+          }}
         />
       )}
     </Box>

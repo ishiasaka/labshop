@@ -2,12 +2,13 @@ use serde::Serialize;
 use std::env;
 use std::process::Command;
 use std::thread;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Serialize, Debug, Clone)]
 pub struct ScanData {
     pub idm: String,
     pub usb_port: Option<u32>,
-    pub reader_type: String,
+    pub timestamp: String,
 }
 
 pub fn hex_upper(bytes: &[u8]) -> String {
@@ -50,11 +51,46 @@ pub fn play_sound(path: &'static str) {
     });
 }
 
+fn iso8601_now() -> String {
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default();
+    let secs = now.as_secs();
+    let millis = now.subsec_millis();
+    let s = secs % 60;
+    let m = (secs / 60) % 60;
+    let h = (secs / 3600) % 24;
+    let days = secs / 86400;
+    // days since 1970-01-01
+    let (y, mo, d) = days_to_ymd(days);
+    format!("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}.{:03}Z", y, mo, d, h, m, s, millis)
+}
+
+fn days_to_ymd(days: u64) -> (u64, u64, u64) {
+    let mut d = days;
+    let mut y = 1970u64;
+    loop {
+        let leap = y % 4 == 0 && (y % 100 != 0 || y % 400 == 0);
+        let days_in_year = if leap { 366 } else { 365 };
+        if d < days_in_year { break; }
+        d -= days_in_year;
+        y += 1;
+    }
+    let leap = y % 4 == 0 && (y % 100 != 0 || y % 400 == 0);
+    let month_days = [31, if leap { 29 } else { 28 }, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let mut mo = 1u64;
+    for &md in &month_days {
+        if d < md { break; }
+        d -= md;
+        mo += 1;
+    }
+    (y, mo, d + 1)
+}
+
 pub fn post_scan_data(idm: &str, usb_port: Option<String>, reader_type: &str) {
+    let port_num = usb_port.as_deref().and_then(usb_port_to_int);
     let data = ScanData {
         idm: idm.to_string(),
-        usb_port: usb_port.as_deref().and_then(usb_port_to_int),
-        reader_type: reader_type.to_string(),
+        usb_port: port_num,
+        timestamp: iso8601_now(),
     };
 
     let url = api_url();
@@ -66,7 +102,7 @@ pub fn post_scan_data(idm: &str, usb_port: Option<String>, reader_type: &str) {
             let status = resp.status();
             println!("[POST] OK: {} -> {}", data.idm, status);
             if status == 200 {
-                let sound = if data.usb_port == Some(5) { SOUND_ADMIN } else { SOUND_OK };
+                let sound = if port_num == Some(5) { SOUND_ADMIN } else { SOUND_OK };
                 play_sound(sound);
             } else {
                 eprintln!("[POST] HTTP {}: {}", status, data.idm);

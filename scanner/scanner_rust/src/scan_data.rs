@@ -37,7 +37,8 @@ fn usb_port_to_int(port: &str) -> Option<u32> {
 }
 
 const SOUND_OK: &str = "/usr/local/share/sounds/paypay.mp3";
-const SOUND_ERR: &str = "/usr/local/share/sounds/error.mp3";
+const SOUND_ADMIN: &str = "/usr/local/share/sounds/admin-2.mp3";
+const SOUND_ERR: &str = "/usr/local/share/sounds/error-2.mp3";
 
 /// Play a sound file in a background thread (non-blocking).
 pub fn play_sound(path: &'static str) {
@@ -65,7 +66,8 @@ pub fn post_scan_data(idm: &str, usb_port: Option<String>, reader_type: &str) {
             let status = resp.status();
             println!("[POST] OK: {} -> {}", data.idm, status);
             if status == 200 {
-                play_sound(SOUND_OK);
+                let sound = if data.usb_port == Some(5) { SOUND_ADMIN } else { SOUND_OK };
+                play_sound(sound);
             } else {
                 eprintln!("[POST] HTTP {}: {}", status, data.idm);
                 play_sound(SOUND_ERR);

@@ -1,4 +1,4 @@
-const API_PREFIX = '/api';
+const API_PREFIX = 'http://localhost:8000';
 const LOGIN_PAGE = '/login';
 
 function $(id) {
@@ -20,7 +20,7 @@ async function apiFetch(path, options = {}) {
 
 async function requireLogin() {
   try {
-    const res = await apiFetch('/me');
+    const res = await apiFetch('/');
     if (!res.ok) {
       window.location.href = LOGIN_PAGE;
       return false;
@@ -231,8 +231,8 @@ async function updateMaxDebt() {
   }
 
   try {
-    const res = await apiFetch('/system_settings/', {
-      method: 'POST',
+    const res = await apiFetch('/settings', {
+      method: 'PUT',
       body: JSON.stringify({ key: 'max_debt_limit', value: val }),
     });
 
@@ -266,9 +266,9 @@ async function registerCard() {
   }
 
   try {
-    const res = await apiFetch('/register_card/', {
+    const res = await apiFetch(`/ic_cards/${uid}/register`, {
       method: 'POST',
-      body: JSON.stringify({ uid, student_id: studentId }),
+      body: JSON.stringify({ student_id: studentId }),
     });
 
     if (res.ok) {
@@ -294,7 +294,7 @@ let dataTimer = null;
 
 async function pollForNewCard() {
   try {
-    const res = await apiFetch('/get_captured_card/');
+    const res = await apiFetch('/ic_cards/captured');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const card = await res.json();

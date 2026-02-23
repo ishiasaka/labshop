@@ -24,6 +24,7 @@ class TokenData(BaseModel):
     full_name: str
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+print(f"SECRET_KEY: {SECRET_KEY}")
 
 def encode_token(data: TokenData, expires_in: int = 3600) -> str:
     to_encode = data.model_dump()

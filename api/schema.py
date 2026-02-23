@@ -98,7 +98,7 @@ class SystemSettingOut(SystemSettingCreate):
 
 class ScanRequest(BaseModel):
     idm: str = Field(..., min_length=4, max_length=64)
-    usb_port: Optional[int] = Field(default=None, ge=1, le=7)
+    usb_port: int = Field(ge=1, le=7)
     timestamp: Optional[datetime] = None
 
     @property
@@ -107,7 +107,6 @@ class ScanRequest(BaseModel):
     
 
 class CardRegistrationRequest(BaseModel): 
-    uid: str
     student_id: int
 
 class AdminLogin(BaseModel):

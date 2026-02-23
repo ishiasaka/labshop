@@ -21,3 +21,9 @@ docker compose up
 ```bash
 $ openssl rand -hex 32
 ```
+
+## Admin token generator (without creating admin user in DB)
+```bash
+$ python generate-token --username <username> --id <optional> --name <optional>
+```
+Please make sure to set `SECRET_KEY` in .env or environment variables

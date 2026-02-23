@@ -1,4 +1,5 @@
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer
+from fastapi.security.http import HTTPAuthorizationCredentials
 from fastapi import Depends, HTTPException, status
 from pydantic import BaseModel
 import os
@@ -10,7 +11,7 @@ import yaml
 
 TOKEN_URL = "/admin/token"
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=TOKEN_URL)
+http_bearer_scheme = HTTPBearer()
 
 logger = logging.getLogger(__name__)
 
@@ -23,17 +24,20 @@ class TokenData(BaseModel):
     username: str
     full_name: str
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-print(f"SECRET_KEY: {SECRET_KEY}")
+
+
 
 def encode_token(data: TokenData, expires_in: int = 3600) -> str:
     to_encode = data.model_dump()
     expire = datetime.now() + timedelta(seconds=expires_in)
     to_encode.update({"exp": expire})
+    SECRET_KEY = os.getenv("SECRET_KEY")
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
 def decode_token(token: str) -> TokenData:
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    print(f"Decoding token: {token}")
     decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     return TokenData(
         id=decoded.get("id") or "",
@@ -42,7 +46,9 @@ def decode_token(token: str) -> TokenData:
     )
     
 
-def get_current_admin(token: str = Depends(oauth2_scheme)) -> TokenData:
+def get_current_admin(credential: HTTPAuthorizationCredentials = Depends(http_bearer_scheme)) -> TokenData:
+    token = credential.credentials
+    print(f"Received token: {token}")
     credentials_expection = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

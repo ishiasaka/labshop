@@ -75,3 +75,7 @@ async def admin_login(credentials: AdminLogin):
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     login_data = await admin_login(AdminLogin(username=form_data.username, password=form_data.password))
     return Token(access_token=login_data["token"], token_type="bearer")
+
+@router.get("/me", description="Get current admin info")
+async def get_current_admin_info(admin: TokenData = Depends(auth.get_current_admin)) -> TokenData:
+    return admin

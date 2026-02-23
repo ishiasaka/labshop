@@ -66,7 +66,7 @@ async def admin_login(credentials: AdminLogin):
     )
 
     return {
-        "admin_id": str(admin.id),
+        "admin_id": admin.id,
         "full_name": full_name,
         "token": token
     }

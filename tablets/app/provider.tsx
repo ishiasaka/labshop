@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { LanguageProvider } from './context/LanguageContext';
+import { AuthProvider } from './context/AuthContext';
 import {
   ThemeProvider as MUIThemeProvider,
   createTheme,
@@ -46,12 +47,14 @@ export default function Provider(props: { children: React.ReactNode }) {
 
   return (
     <ColorModeContext.Provider value={colorMode}>
-      <LanguageProvider>
-        <MUIThemeProvider theme={theme}>
-          <CssBaseline />
-          {props.children}
-        </MUIThemeProvider>
-      </LanguageProvider>
+      <AuthProvider>
+        <LanguageProvider>
+          <MUIThemeProvider theme={theme}>
+            <CssBaseline />
+            {props.children}
+          </MUIThemeProvider>
+        </LanguageProvider>
+      </AuthProvider>
     </ColorModeContext.Provider>
   );
 }

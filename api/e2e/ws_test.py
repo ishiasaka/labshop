@@ -1,6 +1,8 @@
 import pytest
 import websockets as ws
 import os
+import json
+from ws.ws_schema import WSSchema
 
 
 @pytest.mark.asyncio
@@ -17,6 +19,7 @@ class TestWebSocketConnection:
             test_message = "HELLO API"
             await websocket.send(test_message)
             data = await websocket.recv()
-            assert data == f"<ECHO> {test_message}"
+            ws_instace = WSSchema.model_validate_json(json.loads(data))
+            assert ws_instace.action == "ECHO"
         
 

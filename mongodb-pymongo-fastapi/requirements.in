@@ -2,3 +2,5 @@ fastapi             ~=0.110
 pymongo             ~=4.13
 uvicorn             ~=0.28
 pydantic[email]
+python-dotenv
+certifi

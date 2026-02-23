@@ -7,13 +7,11 @@ async function login() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
-  
+
   if (!res.ok) {
     alert('Login failed: ' + (await readErrorMessage(res)));
     return;
   }
-
-  
 
   window.location.href = '/admin';
 }

@@ -3,7 +3,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from schema import ICCardCreate
 from datetime import datetime, timezone
 from models import AdminLog, ICCard, Purchase, User, Shelf, SystemSetting
-from services.ws import ws_connection_manager, WSSchema
+from ws.connection_manager import ws_connection_manager
+from ws.ws_schema import WSSchema
 
 from schema import CardRegistrationRequest, ICCardStatus, PurchaseStatus, ScanRequest
 from services.auth import get_current_admin, TokenData
@@ -164,12 +165,15 @@ async def card_scan(scan: ScanRequest):
         if not student:
             return {"status": "error", "message": "Student record missing."}
 
-        await ws_connection_manager.send_payload_to_tablet(WSSchema(
-            action="PAY_BACK",
-            student_id=str(student.student_id),
-            student_name=student.first_name,
-            debt_amount=student.account_balance
-        ))
+        try:
+            await ws_connection_manager.send_payload_to_tablet(WSSchema(
+                action="PAY_BACK",
+                student_id=str(student.student_id),
+                student_name=student.first_name,
+                debt_amount=student.account_balance
+            ))
+        except ConnectionError:
+            return {"status": "error", "message": "No tablet connected"}
         return {
             "status": "identified",
             "name": student.first_name,

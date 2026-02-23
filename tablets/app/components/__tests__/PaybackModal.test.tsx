@@ -1,178 +1,179 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import PaybackModal from '../PaybackModal';
 import { LanguageProvider } from '../../context/LanguageContext';
 import '@testing-library/jest-dom';
 
-describe('PaybackModal', () => {
-  const mockUserData = {
-    name: 'Test Student',
-    id: '12345',
-    owedAmount: 3000,
-  };
+// ── Mock usePayment ───────────────────────────────────────────────────
+const mockPay = jest.fn();
+jest.mock('../../hooks/usePayment', () => ({
+  usePayment: () => ({ pay: mockPay, isPaying: false, error: null }),
+}));
 
-  const mockOnClose = jest.fn();
+// ── Helpers ───────────────────────────────────────────────────────────
+const MOCK_USER = { name: 'Test Student', id: '12345', owedAmount: 3000 };
 
-  beforeEach(() => {
-    jest.useFakeTimers();
-    mockOnClose.mockClear();
-  });
-
-  afterEach(async () => {
-    await act(async () => {
-      jest.runOnlyPendingTimers();
-    });
-    jest.useRealTimers();
-  });
-
-  it('renders correctly with user data', () => {
-    render(
+function renderModal(open = true, onClose = jest.fn()) {
+  return {
+    onClose,
+    ...render(
       <LanguageProvider>
-        <PaybackModal
-          open={true}
-          onClose={mockOnClose}
-          userData={mockUserData}
-        />
+        <PaybackModal open={open} onClose={onClose} userData={MOCK_USER} />
       </LanguageProvider>
-    );
+    ),
+  };
+}
 
+beforeEach(() => {
+  jest.useFakeTimers();
+  mockPay.mockClear();
+  mockPay.mockResolvedValue({});
+});
+
+afterEach(async () => {
+  await act(async () => {
+    jest.runOnlyPendingTimers();
+  });
+  jest.useRealTimers();
+});
+
+// ── Tests ─────────────────────────────────────────────────────────────
+describe('PaybackModal', () => {
+  it('renders correctly with user data', () => {
+    renderModal();
     expect(screen.getByText('Pay back amount')).toBeInTheDocument();
     expect(screen.getByText('Test Student')).toBeInTheDocument();
-    // Use flexible matcher for amount due to locale formatting potential
-    expect(
-      screen.getByText((content) => content.includes('3,000'))
-    ).toBeInTheDocument();
+    expect(screen.getByText((c) => c.includes('3,000'))).toBeInTheDocument();
     expect(screen.getByText('¥100')).toBeInTheDocument();
     expect(screen.getByText('¥200')).toBeInTheDocument();
     expect(screen.getByText('¥500')).toBeInTheDocument();
   });
 
-  it('triggers payment flow when preset is clicked', async () => {
-    render(
-      <LanguageProvider>
-        <PaybackModal
-          open={true}
-          onClose={mockOnClose}
-          userData={mockUserData}
-        />
-      </LanguageProvider>
-    );
+  it('does not render when open=false', () => {
+    renderModal(false);
+    expect(screen.queryByText('Test Student')).not.toBeInTheDocument();
+  });
 
-    // Click preset
+  it('shows processing state immediately after preset click', async () => {
+    // Keep pay pending so we can observe the processing state
+    mockPay.mockReturnValue(new Promise(() => {}));
+    renderModal();
     fireEvent.click(screen.getByText('¥100'));
-
-    // Should show processing
-    expect(screen.getByText('Payment processing...')).toBeInTheDocument();
-
-    // Fast-forward processing time (1.5s)
-    act(() => {
-      jest.advanceTimersByTime(1500);
-    });
-
-    // Should show success
-    expect(screen.getByText('Payment Successful!')).toBeInTheDocument();
-
-    // Fast-forward auto-close time (2.0s)
-    act(() => {
-      jest.advanceTimersByTime(2000);
-    });
-
-    expect(mockOnClose).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByText('Payment processing...')).toBeInTheDocument()
+    );
   });
 
-  it('allows manual entry through "Other" option', async () => {
-    render(
-      <LanguageProvider>
-        <PaybackModal
-          open={true}
-          onClose={mockOnClose}
-          userData={mockUserData}
-        />
-      </LanguageProvider>
+  it('calls pay with the correct amount for a preset button', async () => {
+    renderModal();
+    fireEvent.click(screen.getByText('¥200'));
+    await waitFor(() =>
+      expect(mockPay).toHaveBeenCalledWith({
+        student_id: 12345,
+        amount_paid: 200,
+      })
     );
-
-    // Click Other
-    fireEvent.click(screen.getByText('Other Amount'));
-
-    // Input appears
-    const input = screen.getByPlaceholderText('Enter amount');
-    expect(input).toBeInTheDocument();
-
-    // Enter amount
-    fireEvent.change(input, { target: { value: '1500' } });
-
-    // Submit
-    fireEvent.click(screen.getByText('Confirm Payment'));
-
-    // Processing
-    expect(screen.getByText('Payment processing...')).toBeInTheDocument();
-
-    // Finish flow
-    act(() => {
-      jest.advanceTimersByTime(3500); // 1.5s + 2.0s
-    });
-
-    expect(mockOnClose).toHaveBeenCalled();
   });
 
-  it('does not close when clicking close button during processing', () => {
-    render(
-      <LanguageProvider>
-        <PaybackModal
-          open={true}
-          onClose={mockOnClose}
-          userData={mockUserData}
-        />
-      </LanguageProvider>
+  it('shows success state after pay resolves', async () => {
+    renderModal();
+    fireEvent.click(screen.getByText('¥500'));
+    await waitFor(() =>
+      expect(screen.getByText('Payment Successful!')).toBeInTheDocument()
     );
+  });
 
-    // Start payment
+  it('auto-closes 2 seconds after payment success', async () => {
+    const { onClose } = renderModal();
     fireEvent.click(screen.getByText('¥100'));
-    expect(screen.getByText('Payment processing...')).toBeInTheDocument();
-
-    // Try to close (finding by icon usually requires looking for the SVG or button role)
-    // The close button is the only IconButton at the top right usually.
-    // We can look for the CloseIcon's testid or the button itself.
-    // Material UI IconButtons usually have a role="button".
-    // Let's assume there are multiple buttons, but the close one is usually identifiable.
-    // Or we can query by the `disabled` state derived from logic.
-    // In our code: <IconButton ... disabled={paymentStatus === 'processing'}>
-
-    // We can try to click all buttons, or target the specific one if we add aria-label.
-    // Since we didn't add aria-label, let's look for the disabled button.
-    const closeButtons = screen.getAllByRole('button');
-    // The preset buttons are not disabled, only the close icon button is.
-    // Actually, buttons are not disabled in code, only the close button is disabled during processing.
-    // Let's just check if there is a disabled button.
-    const disabledButton = closeButtons.find((b) => b.hasAttribute('disabled'));
-    expect(disabledButton).toBeDefined();
-
-    if (disabledButton) {
-      fireEvent.click(disabledButton);
-      expect(mockOnClose).not.toHaveBeenCalled();
-    }
+    await waitFor(() => screen.getByText('Payment Successful!'));
+    act(() => {
+      jest.advanceTimersByTime(2001);
+    });
+    expect(onClose).toHaveBeenCalled();
   });
 
-  it('returns to preset view when "Back to Presets" is clicked', () => {
-    render(
-      <LanguageProvider>
-        <PaybackModal
-          open={true}
-          onClose={mockOnClose}
-          userData={mockUserData}
-        />
-      </LanguageProvider>
-    );
+  it('shows error alert when pay rejects', async () => {
+    mockPay.mockRejectedValue(new Error('Network error'));
+    renderModal();
+    fireEvent.click(screen.getByText('¥100'));
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+  });
 
-    // Open the custom-amount input
+  it('dismisses the error alert via its close button', async () => {
+    mockPay.mockRejectedValue(new Error('fail'));
+    renderModal();
+    fireEvent.click(screen.getByText('¥100'));
+    await waitFor(() => screen.getByRole('alert'));
+    // MUI Alert renders a close button with title "Close"
+    fireEvent.click(screen.getByTitle('Close'));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('opens the custom-amount input after clicking "Other Amount"', () => {
+    renderModal();
     fireEvent.click(screen.getByText('Other Amount'));
     expect(screen.getByPlaceholderText('Enter amount')).toBeInTheDocument();
+  });
 
-    // Go back to presets
+  it('allows entering and submitting a custom amount', async () => {
+    renderModal();
+    fireEvent.click(screen.getByText('Other Amount'));
+    fireEvent.change(screen.getByPlaceholderText('Enter amount'), {
+      target: { value: '1500' },
+    });
+    fireEvent.click(screen.getByText('Confirm Payment'));
+    await waitFor(() =>
+      expect(mockPay).toHaveBeenCalledWith({
+        student_id: 12345,
+        amount_paid: 1500,
+      })
+    );
+  });
+
+  it('does not call pay when custom amount is empty', () => {
+    renderModal();
+    fireEvent.click(screen.getByText('Other Amount'));
+    fireEvent.click(screen.getByText('Confirm Payment'));
+    expect(mockPay).not.toHaveBeenCalled();
+  });
+
+  it('returns to preset view when "Back to presets" is clicked', () => {
+    renderModal();
+    fireEvent.click(screen.getByText('Other Amount'));
+    expect(screen.getByPlaceholderText('Enter amount')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Back to presets'));
-
-    // Preset buttons should be visible again
     expect(screen.getByText('¥100')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Enter amount')).toBeNull();
+    expect(
+      screen.queryByPlaceholderText('Enter amount')
+    ).not.toBeInTheDocument();
+  });
+
+  it('close button calls onClose in idle state', () => {
+    const { onClose } = renderModal();
+    // The only aria-label-less IconButton is the X close button; find by disabled=false
+    const allButtons = screen.getAllByRole('button');
+    // Close button is the one that is NOT a preset (¥) and NOT 'Other Amount'
+    const closeBtn = allButtons.find(
+      (b) => !b.textContent?.match(/¥|Other|Back|Confirm/)
+    );
+    fireEvent.click(closeBtn!);
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('close button is disabled while processing', async () => {
+    mockPay.mockReturnValue(new Promise(() => {}));
+    renderModal();
+    fireEvent.click(screen.getByText('¥100'));
+    await waitFor(() => screen.getByText('Payment processing...'));
+    const allButtons = screen.getAllByRole('button');
+    const disabledBtn = allButtons.find((b) => b.hasAttribute('disabled'));
+    expect(disabledBtn).toBeDefined();
   });
 });

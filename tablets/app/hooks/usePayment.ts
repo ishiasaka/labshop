@@ -19,7 +19,7 @@ export interface PaymentOut {
   created_at: string;
 }
 
-async function postPayment(
+export async function postPayment(
   url: string,
   { arg }: { arg: PaymentCreate }
 ): Promise<PaymentOut> {

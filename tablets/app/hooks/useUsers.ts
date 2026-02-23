@@ -15,7 +15,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const REFRESH_INTERVAL_MS = 90_000; // 1.5 minutes
 
-async function fetcher(url: string): Promise<User[]> {
+export async function fetcher(url: string): Promise<User[]> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch users: ${res.status}`);
   const data = await res.json();

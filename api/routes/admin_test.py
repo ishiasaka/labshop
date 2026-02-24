@@ -20,7 +20,7 @@ TEST_SECRET_KEY = "012588c4754cdeca76c13d53146033cba0717e9df6d9d9cb43a04b9641d57
 class TestAdminLogin:
     @pytest_asyncio.fixture(autouse=True)
     async def test_setup(self,mocker: MockerFixture):
-        mocker.patch("services.auth.SECRET_KEY", TEST_SECRET_KEY)
+        mocker.patch("os.getenv", return_value=TEST_SECRET_KEY)
         client = AsyncMongoMockClient()
         await init_beanie(database=client.get_database("labshop_test"), document_models=[Admin]) # type: ignore
         

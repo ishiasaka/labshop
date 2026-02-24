@@ -1,9 +1,11 @@
+import json
+
 import pytest
 import pytest_asyncio
 from pytest_mock import MockerFixture, mocker
 from unittest.mock import AsyncMock, MagicMock
 from mongomock_motor import AsyncMongoMockClient
-from models import User, ICCard, AdminLog
+from models import Purchase, PurchaseStatus, SystemSetting, User, ICCard, AdminLog, Shelf
 from beanie import PydanticObjectId, init_beanie
 from schema import ICCardCreate, ICCardStatus, CardRegistrationRequest, ScanRequest
 from services.auth import TokenData
@@ -249,11 +251,40 @@ class TestRegisterCard:
 
 @pytest.mark.asyncio
 class TestICCardScan:
+
+    """
+    Admin Port Scanning Scenarios:
+    """
+
     @pytest_asyncio.fixture(autouse=True, scope="function")
     async def test_setup(self,mocker: MockerFixture):
-        
+
+            # 1. Create the detailed mocks first
+        mock_session = mocker.AsyncMock(name="MotorSession")
+        mock_transaction = mocker.AsyncMock(name="MotorTransaction")
+
+        # 2. Configure the Session (The Context Manager)
+        # When we do 'async with session', we want the session back
+        mock_session.__aenter__.return_value = mock_session
+
+        # 3. Configure the Transaction (CRITICAL STEP)
+        # start_transaction must be a SYNC mock that returns the transaction object.
+        # If this were an AsyncMock, it would return a coroutine, causing your error.
+        mock_session.start_transaction = mocker.Mock(return_value=mock_transaction)
+
+        # 4. Configure the Transaction Context Manager
+        mock_transaction.__aenter__.return_value = mock_transaction
+
+        # 5. Setup the Client
         client = AsyncMongoMockClient()
-        await init_beanie(database=client.get_database("labshop_test"), document_models=[User, ICCard]) # type: ignore
+
+        # Force start_session to be an AsyncMock (so it can be awaited)
+        # BUT make its return_value the session object directly.
+        client.start_session = mocker.AsyncMock(return_value=mock_session)
+        
+
+
+        await init_beanie(database=client.get_database("labshop_test"), document_models=[User, ICCard, Shelf, SystemSetting, Purchase]) # type: ignore
 
     async def test_admin_port_exist_ic_card_and_student(self, mocker: MockerFixture):
         """
@@ -289,7 +320,211 @@ class TestICCardScan:
         assert res["name"] == user_findone_mock.return_value.first_name
         assert res["student_id"] == user_findone_mock.return_value.student_id
 
+    async def test_admin_port_card_not_exist(self, mocker: MockerFixture):
+        """
+        Simulate scanning an IC card on an admin USB port, where the card does not exist in the database.
+        Expectation: Create a new card entry with the scanned UID and return a message to register it in admin.
+        """
+        req = ScanRequest(idm="newuid123", usb_port=5) # Admin port
+        iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
+        iccard_findone_mock.return_value = None  # No existing card
 
+        iccard_insert_mock = mocker.patch.object(ICCard, "insert", autospec=True)
+
+        res = await card_scan(req)
+
+        assert res["status"] == "new_card"
+        assert res["message"] == "Card captured. Register in Admin."
+        
+        iccard_insert_mock.assert_called_once()
+        inserted_card = iccard_insert_mock.call_args[0][0]  # The first argument to insert() is the ICCard instance
+        assert inserted_card.uid == "newuid123"
+        assert inserted_card.student_id is None
+        assert inserted_card.status == ICCardStatus.active
+    
+    async def test_admin_port_card_exist_but_unlinked(self, mocker: MockerFixture):
+        """
+        Simulate scanning an IC card on an admin USB port, where the card exists but is not linked to any student.
+        Expectation: Update the card's updated_at timestamp and return a message to register it in admin.
+        """
+        req = ScanRequest(idm="unlinkeduid123", usb_port=5) # Admin port
+        existing_card = MagicMock()
+        existing_card.uid = "unlinkeduid123"
+        existing_card.student_id = None
+        existing_card.status = ICCardStatus.active
+        existing_card.set = AsyncMock()  # Mock the save method for the existing card
+        existing_card.set.return_value = None  # Mock the save method to do nothing    
         
 
+        iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
+        iccard_findone_mock.return_value = existing_card  # Existing unlinked card
 
+
+        res = await card_scan(req)
+
+        assert res["status"] == "new_card"
+        assert res["message"] == "Card captured. Register in Admin."
+        
+        existing_card.set.assert_called_once()
+    
+
+    """
+    Non-Admin Port Scanning Scenarios:
+    """
+
+    async def test_non_admin_unlinked_card(self, mocker: MockerFixture):
+        """
+        Simulate scanning an unlinked IC card on a non-admin USB port.
+        Expectation: Return an error message indicating the card is not linked to a student.
+        """
+        req = ScanRequest(idm="unlinkeduid123", usb_port=2) # Non-admin port
+        existing_card = ICCard(uid="unlinkeduid123", student_id=None, status=ICCardStatus.active)
+
+        iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
+        iccard_findone_mock.return_value = existing_card  # Existing unlinked card
+
+        with pytest.raises(HTTPException) as exc_info:
+            await card_scan(req)
+            assert exc_info.value.status_code == 404
+    
+    async def test_non_admin_unknown_card(self, mocker: MockerFixture):
+        """
+        Simulate scanning an unknown IC card (not in database) on a non-admin USB port.
+        Expectation: Return an error message indicating the card is not found.
+        """
+        req = ScanRequest(idm="unknownuid123", usb_port=2) # Non-admin port
+        iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
+        iccard_findone_mock.return_value = None  # No existing card
+
+        with pytest.raises(HTTPException) as exc_info:
+            await card_scan(req)
+            assert exc_info.value.status_code == 404
+
+    async def test_non_admin_unactive_card(self, mocker: MockerFixture):
+        """
+        Simulate scanning an inactive IC card on a non-admin USB port.
+        Expectation: Return an error message indicating the card is deactivated.
+        """
+        req = ScanRequest(idm="deactivateduid123", usb_port=2) # Non-admin port
+        existing_card = ICCard(uid="deactivateduid123", student_id=1, status=ICCardStatus.deactivated)
+
+        iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
+        iccard_findone_mock.return_value = existing_card  # Existing deactivated card
+
+        with pytest.raises(HTTPException) as exc_info:
+            await card_scan(req)
+            assert exc_info.value.status_code == 403
+
+    
+    async def test_non_admin_user_not_exist(self, mocker: MockerFixture):
+        """
+        Simulate scanning an IC card that is linked to a non-existent student on a non-admin USB port.
+        Expectation: Return an error message indicating the student record is missing.
+        """
+        req = ScanRequest(idm="linkedtoinvalidstudentuid123", usb_port=2) # Non-admin port
+        existing_card = ICCard(uid="linkedtoinvalidstudentuid123", student_id=999, status=ICCardStatus.active)
+
+        iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
+        iccard_findone_mock.return_value = existing_card  # Existing card linked to invalid student
+
+        user_findone_mock = mocker.patch.object(User, "find_one", new_callable=mocker.AsyncMock)
+        user_findone_mock.return_value = None  # No user found for given student_id
+
+        with pytest.raises(HTTPException) as exc_info:
+            await card_scan(req)
+            assert exc_info.value.status_code == 404
+
+    async def test_non_admin_usb_port_not_linked_to_shelf(self, mocker: MockerFixture):
+        """
+        Simulate scanning an IC card on a non-admin USB port that is not linked to any shelf.
+        Expectation: Return an error message indicating the USB port is invalid.
+        """
+        req = ScanRequest(idm="validcarduid123", usb_port=7) # Non-existent USB port
+        existing_card = ICCard(uid="validcarduid123", student_id=1, status=ICCardStatus.active)
+
+        iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
+        iccard_findone_mock.return_value = existing_card  # Existing valid card
+
+        user_findone_mock = mocker.patch.object(User, "find_one", new_callable=mocker.AsyncMock)
+        user_findone_mock.return_value = User(student_id=1, first_name="Test", last_name="Student")  # Valid user
+
+        shelf_findone_mock = mocker.patch.object(Shelf, "find_one", new_callable=mocker.AsyncMock)
+        shelf_findone_mock.return_value = None  # No shelf linked to USB port
+
+        with pytest.raises(HTTPException) as exc_info:
+            await card_scan(req)
+            assert exc_info.value.status_code == 404
+
+    async def test_non_admin_reached_debt_limit(self, mocker: MockerFixture):
+        """
+        Simulate scanning an IC card on a non-admin USB port where the student's account balance plus the shelf price exceeds the debt limit.
+        Expectation: Return an error message indicating the debt limit has been reached.
+        """
+        req = ScanRequest(idm="validcarduid123", usb_port=2) # Non-admin port
+        existing_card = ICCard(uid="validcarduid123", student_id=1, status=ICCardStatus.active)
+
+        iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
+        iccard_findone_mock.return_value = existing_card  # Existing valid card
+
+        user_findone_mock = mocker.patch.object(User, "find_one", new_callable=mocker.AsyncMock)
+        user_findone_mock.return_value = User(student_id=1, first_name="Test", last_name="Student", account_balance=1900)  # User close to debt limit
+
+        shelf_findone_mock = mocker.patch.object(Shelf, "find_one", new_callable=mocker.AsyncMock)
+        shelf_findone_mock.return_value = Shelf(shelf_id="shelf1", usb_port=2, price=200)  # Shelf with price that would exceed limit
+
+        system_setting_findone_mock = mocker.patch.object(SystemSetting, "find_one", new_callable=mocker.AsyncMock)
+        system_setting_findone_mock.return_value = SystemSetting(key="max_debt_limit", value="500")  # Debt limit of 2000
+
+        with pytest.raises(HTTPException) as exc_info:
+            await card_scan(req)
+            assert exc_info.value.status_code == 400
+            detail = json.loads(exc_info.value.detail)
+            assert detail["error_code"] == "LIMIT_REACHED"
+            assert detail["current_debt"] == 1900
+        
+    async def test_non_admin_successful_scan(self, mocker: MockerFixture):
+        """
+        Simulate scanning an IC card on a non-admin USB port where all conditions are met for a successful purchase.
+        Expectation: Update the student's account balance, create a purchase record, and return a success message.
+        """
+        req = ScanRequest(idm="validcarduid123", usb_port=2) # Non-admin port
+        existing_card = MagicMock()
+        existing_card.uid = "validcarduid123"
+        existing_card.student_id = 1
+        existing_card.status = ICCardStatus.active
+
+        iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
+        iccard_findone_mock.return_value = existing_card  # Existing valid card
+
+        user_findone_mock = mocker.patch.object(User, "find_one", new_callable=mocker.AsyncMock)
+        user_mock: User = AsyncMock()
+        user_mock.student_id = 1
+        user_mock.first_name = "Test"
+        user_mock.last_name = "Student"
+        user_mock.account_balance = 100
+        user_mock.save = AsyncMock()
+        user_findone_mock.return_value = user_mock
+        
+        
+        
+        shelf_findone_mock = mocker.patch.object(Shelf, "find_one", new_callable=mocker.AsyncMock)
+        shelf_findone_mock.return_value = Shelf(shelf_id="shelf1", usb_port=2, price=50)  # Shelf with price
+
+        system_setting_findone_mock = mocker.patch.object(SystemSetting, "find_one", new_callable=mocker.AsyncMock)
+        system_setting_findone_mock.return_value = SystemSetting(key="max_debt_limit", value="2000")  # Debt limit of 2000
+
+        purchase_insert_mock = mocker.patch("models.Purchase.insert", autospec=True)
+
+        res = await card_scan(req)
+
+        assert res["status"] == "success"
+        assert res["student_name"] == user_findone_mock.return_value.first_name
+        assert res["amount_charged"] == 50
+        assert res["new_balance"] == 150  # Original balance + price
+        
+        base_purchase = purchase_insert_mock.call_args[0][0]  # The first argument to insert() is the Purchase instance
+        assert base_purchase.student_id == 1
+        assert base_purchase.shelf_id == "shelf1"
+        assert base_purchase.price == 50
+        assert base_purchase.status == PurchaseStatus.completed
+        

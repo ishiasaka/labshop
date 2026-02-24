@@ -129,7 +129,7 @@ async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin
     return {"message": f"Card {uid} successfully deactivated and logged."}
 
 @router.post("/scan", description="Scan an IC card")
-async def card_scan(scan: ScanRequest, res: Response):
+async def card_scan(scan: ScanRequest):
     uid = scan.normalized_uid
     usb_port = scan.usb_port
 

@@ -143,7 +143,7 @@ describe('postPayment (usePayment)', () => {
       json: async () => {
         throw new SyntaxError('bad json');
       },
-    } as Response);
+    } as unknown as Response);
 
     await expect(
       postPayment('http://test/payments/', { arg: ARG })

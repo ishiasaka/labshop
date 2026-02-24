@@ -25,7 +25,7 @@ async def create_purchase(p: PurchaseCreate):
             if not student:
                 raise HTTPException(400, "Student does not exist")
             
-            if student.status != UserStatus.active:
+            if getattr(student, "status", None) == UserStatus.inactive:
                 raise HTTPException(403, "User is inactive")
 
             shelf = await Shelf.find_one(

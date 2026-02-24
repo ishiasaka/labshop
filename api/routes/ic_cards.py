@@ -202,7 +202,7 @@ async def card_scan(scan: ScanRequest):
         if not student:
             return {"status": "error", "message": "Student record missing."}
         
-        if student.status != UserStatus.active:
+        if getattr(student, "status", None) == UserStatus.inactive:
             return {"status": "error", "message": "User is inactive"}
 
         await ws_connection_manager.send_payload_to_tablet(WSSchema(
@@ -232,9 +232,8 @@ async def card_scan(scan: ScanRequest):
             student = await User.find_one(User.student_id == card.student_id, session=session)
             if not student:
                 raise HTTPException(404, "Student record not found")
-            if student.status != UserStatus.active:
+            if getattr(student, "status", None) == UserStatus.inactive:
                 raise HTTPException(403, "User is inactive")
-
             shelf = await Shelf.find_one(Shelf.usb_port == usb_port, session=session)
             if not shelf:
                 raise HTTPException(404, f"Shelf on USB port {usb_port} not found")

@@ -141,7 +141,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Install Playwright Browsers
-        run: yarn exec playwright install --with-deps
+        run: npx playwright install --with-deps
 
       - name: Run E2E Tests
         run: yarn test:e2e

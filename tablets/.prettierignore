@@ -8,3 +8,7 @@ coverage/
 .vercel/
 .husky/
 dist/
+
+# Playwright
+playwright-report/
+test-results/

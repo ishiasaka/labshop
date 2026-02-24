@@ -9,11 +9,8 @@ router = APIRouter(prefix="/shelves")
 @router.post("/", response_model=ShelfOut)
 async def create_shelf(s: ShelfCreate):
     now = datetime.now(timezone.utc)
-    if await Shelf.find_one(Shelf.shelf_id == s.shelf_id):
-        raise HTTPException(400, "Shelf already exists")
 
     shelf = Shelf(
-        shelf_id=s.shelf_id,
         usb_port=s.usb_port,
         price=s.price,
         created_at=now,

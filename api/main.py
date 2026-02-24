@@ -1,3 +1,4 @@
+import logging
 import os
 import certifi
 from fastapi import FastAPI, Body, HTTPException, Header, Depends
@@ -36,22 +37,31 @@ from routes.setting import router as SettingRouter
 
 from services.auth import get_current_admin, TokenData
 
-
+logger = logging.getLogger(__name__)
 
 
 
 async def init_db():
     MONGODB_URL = os.getenv("MONGODB_URL")
     MONGODB_DB = os.getenv("MONGODB_DB")
+    E2E_TEST_MODE = os.getenv("E2E_TEST_MODE", "false").lower() == "true"
+
+    
 
     if not MONGODB_URL or not MONGODB_DB:
         raise RuntimeError("MONGODB_URL or MONGODB_DB is not set")
+    
+    if E2E_TEST_MODE:
+        logger.info("E2E_TEST_MODE is enabled. Using test database.")
+        MONGODB_DB = MONGODB_DB + f"_test_{int(datetime.now().timestamp())}"
+    
     client = AsyncIOMotorClient(MONGODB_URL)
     await init_beanie(
         database=client[MONGODB_DB],
         document_models=[
-            User, Admin, Purchase, Payment, 
-            Shelf, ICCard, AdminLog, SystemSetting
+            User, Admin, 
+            Shelf, ICCard, AdminLog, SystemSetting,
+            Purchase, Payment
         ],
     )
     return client

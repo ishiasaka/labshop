@@ -26,6 +26,7 @@ class ConnectionManager:
         self.__tablet_connection = None
 
     async def send_payload_to_tablet(self, payload: WSSchema):
+        print("Sending payload to tablet:", self.__tablet_connection)
         if self.__tablet_connection:
             await self.__tablet_connection.send_json(payload.model_dump())
             return

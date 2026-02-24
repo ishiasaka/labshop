@@ -1,6 +1,6 @@
 from beanie import PydanticObjectId
-from fastapi import APIRouter, HTTPException, Depends
-from schema import ICCardCreate
+from fastapi import APIRouter, HTTPException, Depends, Response
+from schema import  ICCardCreate
 from datetime import datetime, timezone
 from models import AdminLog, ICCard, Purchase, User, Shelf, SystemSetting
 from services.ws import ws_connection_manager, WSSchema
@@ -64,41 +64,39 @@ async def register_card(uid: str, data: CardRegistrationRequest, admin: TokenDat
 
     now = datetime.now(timezone.utc)
 
-    client = User.get_pymongo_collection().database.client
     
-    async with await client.start_session() as session:
-        async with session.start_transaction():
-            card = await ICCard.find_one(ICCard.uid == uid, session=session)
 
-            if card and card.status != ICCardStatus.active:
-                raise HTTPException(400, "Card is deactivated. Cannot link it.")
-            
-            if card:
-                if card.status == ICCardStatus.active and card.student_id is not None:
-                    raise HTTPException(
-                        status_code=400, 
-                        detail=f"Card {uid} is already linked to Student {card.student_id}"
-                    )
-                card.student_id = data.student_id
-                card.status = ICCardStatus.active
-                await card.save(session=session)
-            else:
-                await ICCard(
-                    uid=uid.strip().lower(),
-                    student_id=data.student_id,
-                    status=ICCardStatus.active,
-                    created_at=now,
-                    updated_at=now
-                ).insert(session=session) 
+    card = await ICCard.find_one(ICCard.uid == uid.strip().lower())
 
-            await AdminLog(
-                admin_id=PydanticObjectId(admin.id),
-                admin_name=admin.full_name,
-                action=f"Linked card {uid} to student {data.student_id}",
-                target=f"Student: {student.first_name} {student.last_name}",
-                targeted_student_id=data.student_id,
-                created_at=now
-            ).insert(session=session) 
+    if card and card.status != ICCardStatus.active:
+        raise HTTPException(400, "Card is deactivated. Cannot link it.")
+    
+    if card:
+        if card.status == ICCardStatus.active and card.student_id is not None:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Card {uid} is already linked to Student {card.student_id}"
+            )
+        card.student_id = data.student_id
+        card.status = ICCardStatus.active
+        await card.save()
+    else:
+        await ICCard(
+            uid=uid.strip().lower(),
+            student_id=data.student_id,
+            status=ICCardStatus.active,
+            created_at=now,
+            updated_at=now
+        ).insert() 
+
+    await AdminLog(
+        admin_id=PydanticObjectId(admin.id),
+        admin_name=admin.full_name,
+        action=f"Linked card {uid} to student {data.student_id}",
+        target=f"Student: {student.first_name} {student.last_name}",
+        targeted_student_id=data.student_id,
+        created_at=now
+    ).insert() 
 
     return {"message": f"Card {uid} linked to student {data.student_id} by {admin.full_name}"}
 
@@ -107,32 +105,31 @@ async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin
     client = User.get_pymongo_collection().database.client
     now = datetime.now(timezone.utc)
     
-    async with await client.start_session() as session:
-        async with session.start_transaction():
 
-            card = await ICCard.find_one(ICCard.uid == uid, session=session)
-            if not card:
-                raise HTTPException(404, "Card not found")
 
-            old_id = card.student_id
+    card = await ICCard.find_one(ICCard.uid == uid)
+    if not card:
+        raise HTTPException(404, "Card not found")
 
-            card.status = ICCardStatus.deactivated
-            card.student_id = None 
-            await card.save(session=session)
+    old_id = card.student_id
 
-            await AdminLog(
-                admin_id=PydanticObjectId(admin.id),
-                admin_name=admin.full_name,
-                action=f"Deactivated card {uid}",
-                target=f"Disconnected from Student: {old_id}",
-                targeted_student_id=old_id,
-                created_at=now
-            ).insert(session=session)
+    card.status = ICCardStatus.deactivated
+    card.student_id = None 
+    await card.save()
+
+    await AdminLog(
+        admin_id=PydanticObjectId(admin.id),
+        admin_name=admin.full_name,
+        action=f"Deactivated card {uid}",
+        target=f"Disconnected from Student: {old_id}",
+        targeted_student_id=old_id,
+        created_at=now
+    ).insert()
 
     return {"message": f"Card {uid} successfully deactivated and logged."}
 
 @router.post("/scan", description="Scan an IC card")
-async def card_scan(scan: ScanRequest):
+async def card_scan(scan: ScanRequest, res: Response):
     uid = scan.normalized_uid
     usb_port = scan.usb_port
 
@@ -178,58 +175,48 @@ async def card_scan(scan: ScanRequest):
         }
 
     if not card or card.student_id is None:
-        raise HTTPException(404, "Card not registered to a student")
+        raise HTTPException(422, "Card not recognized.")
     
     if card.status != ICCardStatus.active:
         raise HTTPException(403, "Card is not active")
 
     client = User.get_pymongo_collection().database.client
     
-    async with await client.start_session() as session:
-        async with session.start_transaction():
             
-            student = await User.find_one(User.student_id == card.student_id, session=session)
-            if not student:
-                raise HTTPException(404, "Student record not found")
+    student = await User.find_one(User.student_id == card.student_id)
+    if not student:
+        raise HTTPException(404, "Student record not found")
 
-            shelf = await Shelf.find_one(Shelf.usb_port == usb_port, session=session)
-            if not shelf:
-                raise HTTPException(404, f"Shelf on USB port {usb_port} not found")
+    shelf = await Shelf.find_one(Shelf.usb_port == usb_port)
+    if not shelf:
+        raise HTTPException(404, f"Shelf on USB port {usb_port} not found")
 
-            price = shelf.price
-            limit_doc = await SystemSetting.find_one(SystemSetting.key == "max_debt_limit", session=session)
-            max_limit = int(limit_doc.value) if limit_doc else 2000
-            
-            if student.account_balance + price > max_limit:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "error_code": "LIMIT_REACHED",
-                        "message": "Debt limit reached",
-                        "current_debt": student.account_balance
-                    }
-                )
-
-            # Update Student Balance
-            student.account_balance += price
-            student.updated_at = now
-            await student.save(session=session)
-
-            new_purchase = Purchase(
-                student_id=student.student_id,
-                shelf_id=shelf.shelf_id,
-                price=price,
-                status=PurchaseStatus.completed,
-                created_at=now
-            )
-            await new_purchase.insert(session=session)
-
-            return {
-                "status": "success",
-                "student_name": student.first_name,
-                "amount_charged": price,
-                "new_balance": student.account_balance
+    price = shelf.price
+    limit_doc = await SystemSetting.find_one(SystemSetting.key == "max_debt_limit")
+    max_limit = int(limit_doc.value) if limit_doc else 2000
+    
+    if student.account_balance + price > max_limit:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error_code": "LIMIT_REACHED",
+                "message": "Debt limit reached",
+                "current_debt": student.account_balance
             }
+        )
+
+    # Update Student Balance
+    await student.make_purchase(
+        shelf_id=shelf.id,
+        price=price,
+    )
+
+    return {
+        "status": "purchase_recorded",
+        "message": f"Purchase recorded for student {student.student_id} at shelf {shelf.id}",
+        "name": student.first_name,
+        "student_id": student.student_id
+    }
 
 
 

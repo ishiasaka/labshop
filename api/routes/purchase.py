@@ -14,47 +14,32 @@ async def list_purchases():
 async def create_purchase(p: PurchaseCreate):
     now = datetime.now(timezone.utc)
 
-    client = Purchase.get_pymongo_collection().database.client
     
-    async with client.start_session() as session:
-        async with await session.start_transaction():
-            student = await User.find_one(
-                User.student_id == p.student_id,
-                session=session
-            )
-            if not student:
-                raise HTTPException(400, "Student does not exist")
+    student = await User.find_one(
+        User.student_id == p.student_id,
+    )
+    if not student:
+        raise HTTPException(400, "Student does not exist")
 
-            shelf = await Shelf.find_one(
-                Shelf.shelf_id == p.shelf_id,
-                session=session
-            )
-            if not shelf:
-                raise HTTPException(400, "Shelf does not exist")
+    shelf = await Shelf.find_one(
+        Shelf.id == p.shelf_id,
+    )
+    if not shelf:
+        raise HTTPException(400, "Shelf does not exist")
 
-            price = shelf.price
-            limit_doc = await SystemSetting.find_one(
-                SystemSetting.key == "max_debt_limit",
-                session=session
-            )
-            max_limit = int(limit_doc.value) if limit_doc else 2000
+    price = shelf.price
+    limit_doc = await SystemSetting.find_one(
+        SystemSetting.key == "max_debt_limit",
+    )
+    max_limit = int(limit_doc.value) if limit_doc else 2000
 
-            if student.account_balance + price > max_limit:
-                raise HTTPException(400, "Debt limit reached")
+    if student.account_balance + price > max_limit:
+        raise HTTPException(400, "Debt limit reached")
+    
+    purchase = await student.make_purchase(
+        shelf_id=p.shelf_id,
+        price=price,
+    )
 
-            student.account_balance += price
-            student.updated_at = now
-            await student.save(session=session)
-
-            purchase = Purchase(
-                student_id=p.student_id,
-                shelf_id=p.shelf_id,
-                price=price,
-                status=PurchaseStatus.completed,
-                created_at=now,
-            )
-
-            await purchase.insert(session=session)
-
-            return purchase
+    return purchase
 

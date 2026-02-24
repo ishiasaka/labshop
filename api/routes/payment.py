@@ -13,36 +13,25 @@ async def list_payments():
 async def create_payment(p: PaymentCreate):
     now = datetime.now(timezone.utc)
     
-    client = User.get_pymongo_collection().database.client
+    student = await User.find_one(User.student_id == p.student_id)
+    if not student:
+        raise HTTPException(404, "Student not found")
+
+    amount = int(p.amount_paid)
+    if amount <= 0:
+        raise HTTPException(400, "Payment amount must be greater than zero.")
+    if student.account_balance < amount:
+        raise HTTPException(400, "Your debt is less than what you want to pay")
+
+    if p.idempotency_key:
+        existing = await Payment.find_one(Payment.idempotency_key == p.idempotency_key)
+        if existing:
+            return existing
     
-    async with await client.start_session() as session:
-        async with session.start_transaction():
-            student = await User.find_one(User.student_id == p.student_id, session=session)
-            if not student:
-                raise HTTPException(404, "Student not found")
-
-            amount = int(p.amount_paid)
-            if amount <= 0:
-                raise HTTPException(400, "Payment amount must be greater than zero.")
-            if student.account_balance < amount:
-                raise HTTPException(400, "Your debt is less than what you want to pay")
-
-            if p.idempotency_key:
-                existing = await Payment.find_one(Payment.idempotency_key == p.idempotency_key, session=session)
-                if existing:
-                    return existing
-            
-            payment = Payment(
-                student_id=p.student_id,
-                amount_paid=amount,
-                status=PaymentStatus.completed,
-                idempotency_key=p.idempotency_key,
-                created_at=now,
-            )
-
-            await payment.insert(session=session)
-            # Deduct the amount from student's balance
-            student.account_balance -= amount
-            await student.save(session=session)
-            return payment
+    payment = await student.make_payment(
+        amount_paid=amount,
+        external_transaction_id=p.external_transaction_id,
+        idempotency_key=p.idempotency_key,
+    )
+    return payment
 

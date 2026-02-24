@@ -10,7 +10,7 @@ services:
     volumes:
       - .:/app
     environment:
-      ENV: e2e
+      ENV: development
       MONGODB_URL: mongodb://db:27017
       MONGODB_DB: labshop
   

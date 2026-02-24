@@ -77,7 +77,6 @@ class AdminLogOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class ShelfCreate(BaseModel):
-    shelf_id: str 
     usb_port: int
     price: int = 0
 

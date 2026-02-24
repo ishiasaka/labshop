@@ -67,7 +67,6 @@ async function logout() {
 async function readErrorMessage(res) {
   try {
     const contentType = res.headers.get('content-type') || '';
-    ƒ;
     if (contentType.includes('application/json')) {
       const payload = await res.json();
       const detail = payload?.detail ?? payload?.message ?? payload;
@@ -80,7 +79,7 @@ async function readErrorMessage(res) {
       return JSON.stringify(detail, null, 2);
     }
     return await res.text();
-  } catch (e) {
+  } catch {
     return `Request failed (${res.status})`;
   }
 }

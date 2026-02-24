@@ -10,6 +10,7 @@ import logging
 import yaml
 
 TOKEN_URL = "/admin/token"
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
 
 http_bearer_scheme = HTTPBearer()
 
@@ -31,12 +32,10 @@ def encode_token(data: TokenData, expires_in: int = 3600) -> str:
     to_encode = data.model_dump()
     expire = datetime.now() + timedelta(seconds=expires_in)
     to_encode.update({"exp": expire})
-    SECRET_KEY = os.getenv("SECRET_KEY")
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
 def decode_token(token: str) -> TokenData:
-    SECRET_KEY = os.getenv("SECRET_KEY")
     print(f"Decoding token: {token}")
     decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     return TokenData(
@@ -57,7 +56,7 @@ def get_current_admin(credential: HTTPAuthorizationCredentials = Depends(http_be
 
     try:
         token_data = decode_token(token)
-        if token_data.id is None:
+        if not token_data.id:
             raise credentials_expection
         return token_data
     except Exception as e:

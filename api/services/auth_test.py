@@ -12,7 +12,7 @@ TEST_SECRET_KEY = "012588c4754cdeca76c13d53146033cba0717e9df6d9d9cb43a04b9641d57
 
 @pytest.fixture(autouse=True)
 def mock_secret_key(mocker: MockerFixture):
-    mocker.patch("services.auth.SECRET_KEY", TEST_SECRET_KEY)
+    mocker.patch("os.getenv", return_value=TEST_SECRET_KEY)
 
 class TestAuth:
     @pytest.mark.asyncio
@@ -66,7 +66,10 @@ class TestAuth:
         # Mock decode_token to return expected_data
         mocker.patch("services.auth.decode_token", return_value=expected_data)
         
-        result = get_current_admin(token=token_str)
+        httpCreditials = MagicMock()
+        httpCreditials.credentials = token_str
+        
+        result = get_current_admin(httpCreditials)
         assert result == expected_data
 
     @pytest.mark.asyncio
@@ -78,8 +81,11 @@ class TestAuth:
         # (jwt.decode raises pyjwt exceptions, but get_current_admin catches Exception)
         mocker.patch("services.auth.decode_token", side_effect=jwt.PyJWTError("Invalid token"))
         
+        httpCreditials = MagicMock()
+        httpCreditials.credentials = token_str
+        
         with pytest.raises(HTTPException) as exc_info:
-            get_current_admin(token=token_str)
+            get_current_admin(httpCreditials)
         
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Could not validate credentials"
@@ -109,7 +115,10 @@ class TestAuth:
         
         mocker.patch("services.auth.decode_token", return_value=mock_data)
         
+        httpCreditials = MagicMock()
+        httpCreditials.credentials = token_str
+        
         with pytest.raises(HTTPException) as exc_info:
-             get_current_admin(token=token_str)
+             get_current_admin(httpCreditials)
              
         assert exc_info.value.status_code == 401

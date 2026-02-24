@@ -43,7 +43,6 @@ app.get('/', (req, res) => {
   if (req.session?.admin?.token) return res.redirect('/admin');
   return res.redirect('/login');
 });
-
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
@@ -51,7 +50,6 @@ app.get('/login', (req, res) => {
 app.get('/admin', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
 app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body ?? {};
@@ -72,14 +70,13 @@ app.post('/login', async (req, res) => {
         .status(r.status)
         .json(data ?? { detail: 'Invalid credentials' });
     }
-
     req.session.admin = {
-      admin_id: data.admin_id,
-      admin_name: data.full_name,
       token: data.token,
+      admin_id: String(data.admin_id),
+      admin_name: data.full_name,
     };
 
-    return res.json({ ok: true });
+    req.session.save(() => res.json({ ok: true }));
   } catch (e) {
     console.error(e);
     return res.status(500).json({ detail: 'Login proxy failed' });
@@ -103,9 +100,7 @@ app.get('/api/me', requireAuthApi, (req, res) => {
 app.use('/api', requireAuthApi, async (req, res) => {
   try {
     const url = `${FASTAPI_BASE}${req.originalUrl.replace(/^\/api/, '')}`;
-
     const token = req.session.admin.token;
-
     const headers = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -121,7 +116,6 @@ app.use('/api', requireAuthApi, async (req, res) => {
     }
 
     const r = await fetch(url, options);
-
     const contentType = r.headers.get('content-type') || '';
     res.status(r.status);
 

@@ -2,6 +2,7 @@ import os
 import certifi
 from fastapi import FastAPI, Body, HTTPException, Header, Depends
 from dotenv import load_dotenv
+load_dotenv()
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone
 from beanie import PydanticObjectId, init_beanie
@@ -38,8 +39,6 @@ from services.auth import get_current_admin, TokenData
 
 
 
-
-
 async def init_db():
     MONGODB_URL = os.getenv("MONGODB_URL")
     MONGODB_DB = os.getenv("MONGODB_DB")
@@ -56,7 +55,6 @@ async def init_db():
     )
     return client
 
-load_dotenv()
 # 3. Lifespan manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):

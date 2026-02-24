@@ -79,7 +79,7 @@ class User(Document):
         self.updated_at = utcnow()
         return await super().save(*args, **kwargs)
 
-    async def make_purchase(self, shelf_id: str, price: int):
+    async def make_purchase(self, shelf_id: PydanticObjectId, price: int) -> Purchase:
         purchase = Purchase(
             student_id=self.student_id,
             shelf_id=shelf_id,
@@ -87,6 +87,7 @@ class User(Document):
             status=PurchaseStatus.pending,
         )
         purchase = await purchase.insert()
+        
         try:
             await self.inc({
             "account_balance": price

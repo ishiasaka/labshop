@@ -212,10 +212,10 @@ async def card_scan(scan: ScanRequest):
     )
 
     return {
-        "status": "purchase_recorded",
-        "message": f"Purchase recorded for student {student.student_id} at shelf {shelf.id}",
-        "name": student.first_name,
-        "student_id": student.student_id
+        "status": "success",
+        "student_name": student.first_name,
+        "amount_charged": price,
+        "new_balance": student.account_balance
     }
 
 

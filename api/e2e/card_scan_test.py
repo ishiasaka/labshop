@@ -108,7 +108,7 @@ class TestFlows:
             }
             scan_resp_2 = await client.post(f"{self.url}/ic_cards/scan", json=scan_data_2, headers=headers)
             assert scan_resp_2.status_code == 200
-            assert scan_resp_2.json().get("status") == "purchase_recorded"
+            assert scan_resp_2.json().get("status") == "success"
             
             # 8. Check the user's account balance
             user_resp_2 = await client.get(f"{self.url}/users/{user_data['student_id']}", headers=headers)

@@ -8,3 +8,6 @@ e2e-dev:
 
 e2e:
 	pytest -c pytest.e2e.ini -v --tb=short 
+
+unittest:
+	pytest -c pytest.unit.ini -v --tb=short

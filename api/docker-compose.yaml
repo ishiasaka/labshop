@@ -7,11 +7,9 @@ services:
     image: labshop-api:latest
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
     environment:
       ENV: e2e
-      MONGODB_URL: mongodb://db:27017
+      MONGODB_URL: mongodb://db-replica:27017/?replicaSet=rs0
       MONGODB_DB: labshop
   
   # db:
@@ -40,7 +38,7 @@ services:
         echo 'Waiting for MongoDB to start...'
         sleep 5
         echo 'Initializing replica set...'
-        mongosh --host mongodb:27017 --eval 'rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"127.0.0.1:27017\"}]})'
+        mongosh --host db-replica:27017 --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: \"127.0.0.1:27017\"}]})'
         echo 'Replica set initialized.'
       "
     

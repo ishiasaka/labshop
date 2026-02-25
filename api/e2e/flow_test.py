@@ -16,12 +16,12 @@ class TestFlows:
     
     @pytest.fixture(autouse=True)
     def setup(self) -> None:
-        url = os.environ.get('API_URL', '127.0.0.1:8000')
+        url = os.environ.get('API_URL', 'localhost:8000')
         self.ws_url = f"ws://{url}"
         self.url = f"http://{url}"
 
     async def test_full_flow(self):
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(base_url=self.url) as client:
             # 1. Create a admin user
             admin_data = {
                 "username": f"testadmin_{int(datetime.now(timezone.utc).timestamp())}",
@@ -30,7 +30,7 @@ class TestFlows:
                 "last_name": "Admin"
             }
             
-            admin_create_resp = await client.post(f"{self.url}/admin/", json=admin_data)
+            admin_create_resp = await client.post(f"/admin/", json=admin_data)
             assert admin_create_resp.status_code == 200
             assert admin_create_resp.json().get("username") == admin_data["username"]
             
@@ -40,7 +40,7 @@ class TestFlows:
                 "password": admin_data["password"]
             }
             
-            login_resp = await client.post(f"{self.url}/admin/login", json=login_data)
+            login_resp = await client.post(f"/admin/login", json=login_data)
             assert login_resp.status_code == 200
             
             token = login_resp.json().get("token")
@@ -53,13 +53,13 @@ class TestFlows:
                 "last_name": "Student"
             }
             
-            
-            user_create_resp = await client.post(f"{self.url}/users/", json=user_data, headers={"Authorization": f"Bearer {token}"})
+            headers = {"Authorization": f"Bearer {token}"}
+            user_create_resp = await client.post(f"/users/", json=user_data, headers=headers)
             assert user_create_resp.status_code == 200
             
             
             headers = {"Authorization": f"Bearer {token}"}
-            user_resp = await client.get(f"{self.url}/users/{user_data['student_id']}", headers=headers)
+            user_resp = await client.get(f"/users/{user_data['student_id']}", headers=headers)
             assert user_resp.status_code == 200
             assert user_resp.json().get("student_id") == user_data["student_id"]
             assert user_resp.json().get("first_name") == user_data["first_name"]
@@ -74,7 +74,7 @@ class TestFlows:
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
             
-            scan_resp = await client.post(f"{self.url}/ic_cards/scan", json=scan_data)
+            scan_resp = await client.post(f"/ic_cards/scan", json=scan_data)
             print(scan_resp.json())
             assert scan_resp.status_code == 200
             assert scan_resp.json().get("status") == "new_card"
@@ -85,7 +85,7 @@ class TestFlows:
                 "student_id": user_data["student_id"]
             }
             
-            link_resp = await client.post(f"{self.url}/ic_cards/{ic_card_number}/register", json=link_data, headers=headers)
+            link_resp = await client.post(f"/ic_cards/{ic_card_number}/register", json=link_data, headers=headers)
             print(link_resp)
             assert link_resp.status_code == 200
             
@@ -98,7 +98,7 @@ class TestFlows:
                 "price": 100
             }
             
-            shelf_resp = await client.post(f"{self.url}/shelves/", json=shelf_data, headers=headers)
+            shelf_resp = await client.post(f"/shelves/", json=shelf_data, headers=headers)
             assert shelf_resp.status_code == 200
             
             # 7. Scan the card again to simulate a purchase
@@ -107,12 +107,12 @@ class TestFlows:
                 "usb_port": 1, # Shelf PORT
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
-            scan_resp_2 = await client.post(f"{self.url}/ic_cards/scan", json=scan_data_2, headers=headers)
+            scan_resp_2 = await client.post(f"/ic_cards/scan", json=scan_data_2, headers=headers)
             assert scan_resp_2.status_code == 200
             assert scan_resp_2.json().get("status") == "success"
             
             # 8. Check the user's account balance
-            user_resp_2 = await client.get(f"{self.url}/users/{user_data['student_id']}", headers=headers)
+            user_resp_2 = await client.get(f"/users/{user_data['student_id']}", headers=headers)
             assert user_resp_2.status_code == 200
             assert user_resp_2.json().get("account_balance") == 100
             
@@ -140,7 +140,7 @@ class TestFlows:
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }
                 
-                resp = await client.post(f"{self.url}/ic_cards/scan", json=scan_data_3, headers=headers)
+                resp = await client.post(f"/ic_cards/scan", json=scan_data_3, headers=headers)
                 ws_message = await asyncio.wait_for(ws_listen_task, timeout=5)
                 assert resp.status_code == 200
                 resp_json = resp.json()
@@ -160,12 +160,12 @@ class TestFlows:
                 "amount_paid": 100,
             }
             
-            payback_resp = await client.post(f"{self.url}/payments/", json=payback_data, headers=headers)
+            payback_resp = await client.post(f"/payments/", json=payback_data, headers=headers)
             assert payback_resp.status_code == 200
             assert payback_resp.json().get("status") == "completed"
             
             # 11. Check the user's account balance is now 0
-            user_resp_3 = await client.get(f"{self.url}/users/{user_data['student_id']}", headers=headers)
+            user_resp_3 = await client.get(f"/users/{user_data['student_id']}", headers=headers)
             assert user_resp_3.status_code == 200
             assert user_resp_3.json().get("account_balance") == 0
                 

@@ -1,4 +1,4 @@
-.PHONY: dev unittest docker-db e2e-dev e2e
+.PHONY: dev unittest docker-db e2e-dev e2e docker-up-e2e docker-down-e2e clean-db
 
 dev:
 	fastapi dev main.py
@@ -17,3 +17,9 @@ clean-db:
 
 e2e:
 	pytest -c pytest.e2e.ini -v --tb=short 
+
+docker-up-e2e:
+	docker compose -f docker-compose.test.yaml up -d
+
+docker-down-e2e:
+	docker compose -f docker-compose.test.yaml down --rmi local -v

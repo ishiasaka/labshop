@@ -4,21 +4,50 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: labshop-api:latest
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
     environment:
       ENV: e2e
-      MONGODB_URL: mongodb://db:27017
-      MONGODB_DB: labshop_ci
-
-  db:
+      MONGODB_URL: mongodb://db-replica:27017/?replicaSet=rs0
+      MONGODB_DB: labshop
+      SECRET_KEY: "375d7329c23456df4c198c01e092618889fdcdd2bbbda1c5ee5eb99e06ff580b"
+    
+    depends_on:
+      db-replica-init:
+        condition: service_completed_successfully
+  
+  # db:
+  #   image: mongo:8.2.4-noble
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo-data:/data/db
+  
+  db-replica:
     image: mongo:8.2.4-noble
+    container_name: labshop-mongo-replica
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
-
+    command: mongod --replSet rs0 --bind_ip_all
+  db-replica-init:
+    image: mongo:8.2.4-noble
+    container_name: labshop-mongo-replica-init
+    depends_on:
+      - db-replica
+    restart: "no" # We only want this to run once and then stop
+    command: >
+      bash -c "
+        until mongosh --host db-replica:27017 --eval 'db.runCommand({ping: 1})'; do
+          echo 'Waiting for MongoDB to be ready...'
+          sleep 2
+        done
+        echo 'Initializing replica set...'
+        mongosh --host db-replica:27017 --eval 'rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"db-replica:27017\"}]})'
+        echo 'Replica set initialized.'
+      "
+    
 volumes:
   mongo-data:

@@ -1,3 +1,4 @@
+import logging
 import os
 import certifi
 from fastapi import FastAPI, Body, HTTPException, Header, Depends
@@ -25,6 +26,8 @@ from schema import (
     ScanRequest, CardRegistrationRequest
 )
 
+
+
 from routes.admin import router as AdminRouter
 from routes.ic_cards import router as ICCardRouter
 from routes.payment import router as PaymentRouter
@@ -36,11 +39,14 @@ from routes.setting import router as SettingRouter
 
 from services.auth import get_current_admin, TokenData
 
+logger = logging.getLogger("uvicorn.error")
 
 
 async def init_db():
     MONGODB_URL = os.getenv("MONGODB_URL")
     MONGODB_DB = os.getenv("MONGODB_DB")
+    
+    logger.info(f"Initializing database with URL: {MONGODB_URL} and DB: {MONGODB_DB}")
 
     if not MONGODB_URL or not MONGODB_DB:
         raise RuntimeError("MONGODB_URL or MONGODB_DB is not set")
@@ -58,10 +64,10 @@ async def init_db():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     client = await init_db()
-    print("Startup: Database initialized.")
+    logger.info("Startup: Database initialized.")
     yield
     client.close() 
-    print("Shutdown: Database closed.")
+    logger.info("Shutdown: Database closed.")
 
 app = FastAPI(
     title="Labshop API",

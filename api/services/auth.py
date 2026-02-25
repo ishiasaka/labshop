@@ -11,6 +11,7 @@ import yaml
 
 TOKEN_URL = "/admin/token"
 
+
 http_bearer_scheme = HTTPBearer()
 
 logger = logging.getLogger(__name__)

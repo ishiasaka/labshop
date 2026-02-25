@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from schema import PurchaseCreate, PurchaseOut
 from datetime import datetime, timezone
-from models import Purchase, User, Shelf, SystemSetting, PurchaseStatus
+from models import Purchase, User, Shelf, SystemSetting, PurchaseStatus, UserStatus
 from schema import PurchasesOut
 
 router = APIRouter(prefix="/purchases")
@@ -24,6 +24,9 @@ async def create_purchase(p: PurchaseCreate):
             )
             if not student:
                 raise HTTPException(400, "Student does not exist")
+            
+            if getattr(student, "status", None) == UserStatus.inactive:
+                raise HTTPException(403, "User is inactive")
 
             shelf = await Shelf.find_one(
                 Shelf.shelf_id == p.shelf_id,

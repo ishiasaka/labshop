@@ -1,6 +1,6 @@
 from beanie import PydanticObjectId
 from fastapi import APIRouter, HTTPException, Depends
-from schema import ICCardCreate
+from schema import ICCardCreate, UserStatus
 from datetime import datetime, timezone
 from models import AdminLog, ICCard, Purchase, User, Shelf, SystemSetting
 from ws.connection_manager import ws_connection_manager
@@ -17,12 +17,17 @@ async def get_active_ic_cards():
     cards = await ICCard.find(ICCard.status == ICCardStatus.active).to_list()
     return cards
 
-@router.get("/captured", description="Get latest captured IC cards that is linked to students")
+@router.get("/captured", description="Get latest captured unlinked IC card for admin registration")
 async def get_captured_ic_cards():
-    return await ICCard.find(
-        ICCard.student_id != None,
-        ICCard.status == ICCardStatus.active
-    ).sort(-ICCard.created_at).to_list()
+    card = await (
+        ICCard.find(
+            ICCard.student_id == None,
+            ICCard.status == ICCardStatus.active
+        )
+        .sort(-ICCard.updated_at)
+        .first_or_none()
+    )
+    return {"uid": card.uid} if card else {"uid": None}
 
 @router.post("/", description="Create a new IC card")
 async def create_ic_card(card: ICCardCreate):
@@ -132,6 +137,37 @@ async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin
 
     return {"message": f"Card {uid} successfully deactivated and logged."}
 
+@router.post("/{uid}/unlink", description="Unlink an IC card from its student (keep card active)")
+async def unlink_card(uid: str, admin: TokenData = Depends(get_current_admin)):
+    client = User.get_pymongo_collection().database.client
+    now = datetime.now(timezone.utc)
+
+    async with await client.start_session() as session:
+        async with session.start_transaction():
+            card = await ICCard.find_one(ICCard.uid == uid, session=session)
+            if not card:
+                raise HTTPException(404, "Card not found")
+
+            old_id = card.student_id
+            if old_id is None:
+                raise HTTPException(400, "Card is not linked to any student")
+
+            # Keep active, just unlink
+            card.student_id = None
+            card.updated_at = now
+            await card.save(session=session)
+
+            await AdminLog(
+                admin_id=PydanticObjectId(admin.id),
+                admin_name=admin.full_name,
+                action=f"Unlinked card {uid}",
+                target=f"Was linked to Student: {old_id}",
+                targeted_student_id=old_id,
+                created_at=now
+            ).insert(session=session)
+
+    return {"message": f"Card {uid} unlinked"}
+
 @router.post("/scan", description="Scan an IC card")
 async def card_scan(scan: ScanRequest):
     uid = scan.normalized_uid
@@ -160,10 +196,15 @@ async def card_scan(scan: ScanRequest):
                 await new_card.insert()
                 print(">>> Successfully inserted NEW card to DB.")
             return {"status": "new_card", "message": "Card captured. Register in Admin."}
+        if card.status != ICCardStatus.active:
+            return {"status": "error", "message": "Card is not active"}
 
         student = await User.find_one(User.student_id == card.student_id)
         if not student:
             return {"status": "error", "message": "Student record missing."}
+        
+        if getattr(student, "status", None) == UserStatus.inactive:
+            return {"status": "error", "message": "User is inactive"}
 
         try:
             await ws_connection_manager.send_payload_to_tablet(WSSchema(
@@ -195,7 +236,8 @@ async def card_scan(scan: ScanRequest):
             student = await User.find_one(User.student_id == card.student_id, session=session)
             if not student:
                 raise HTTPException(404, "Student record not found")
-
+            if getattr(student, "status", None) == UserStatus.inactive:
+                raise HTTPException(403, "User is inactive")
             shelf = await Shelf.find_one(Shelf.usb_port == usb_port, session=session)
             if not shelf:
                 raise HTTPException(404, f"Shelf on USB port {usb_port} not found")

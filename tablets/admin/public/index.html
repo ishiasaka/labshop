@@ -37,6 +37,35 @@
             Connect Card to Student
           </button>
         </div>
+        <div class="card cards">
+          <h2>IC Cards</h2>
+          <div class="input-group">
+            <input
+              type="text"
+              id="cardSearch"
+              placeholder="Search UID or Student ID..."
+              onkeyup="filterCards()"
+            />
+          </div>
+          <table id="cardTable" class="styled-table">
+            <thead>
+              <tr>
+                <th>UID</th>
+                <th>Student ID</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Filled by js -->
+            </tbody>
+          </table>
+          <div class="pager">
+            <button id="cardsPrev" onclick="cardsPrevPage()">‹</button>
+            <span id="cardsPageInfo">1 / 1</span>
+            <button id="cardsNext" onclick="cardsNextPage()">›</button>
+          </div>
+        </div>
 
         <div class="card">
           <h3>Add New Student</h3>
@@ -52,6 +81,52 @@
           <button class="btn-success" onclick="createUser()">
             Save New Student
           </button>
+        </div>
+        <div class="card users">
+          <h2>All Users</h2>
+          <div class="input-group">
+            <input
+              type="text"
+              id="allUserSearch"
+              placeholder="Search Name or ID..."
+              onkeyup="filterAllUsers()"
+            />
+          </div>
+          <table id="allUserTable" class="styled-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Balance</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+          <div class="pager">
+            <button
+              class="pager-btn"
+              id="allUsersPrev"
+              onclick="allUsersPrevPage()"
+              aria-label="Previous page"
+            >
+              &#x2039;
+            </button>
+
+            <span class="pager-info" id="allUsersPageInfo">1 / 1</span>
+
+            <button
+              class="pager-btn"
+              id="allUsersNext"
+              onclick="allUsersNextPage()"
+              aria-label="Next page"
+            >
+              &#x203A;
+            </button>
+          </div>
         </div>
       </div>
 
@@ -79,6 +154,11 @@
             </thead>
             <tbody></tbody>
           </table>
+          <div class="pager">
+            <button id="debtPrev" onclick="debtPrevPage()">‹</button>
+            <span id="debtPageInfo">1 / 1</span>
+            <button id="debtNext" onclick="debtNextPage()">›</button>
+          </div>
         </div>
 
         <div class="card" style="border-top: 4px solid #ffc107">
@@ -109,6 +189,11 @@
             </thead>
             <tbody></tbody>
           </table>
+          <div class="pager">
+            <button id="activityPrev" onclick="activityPrevPage()">‹</button>
+            <span id="activityPageInfo">1 / 1</span>
+            <button id="activityNext" onclick="activityNextPage()">›</button>
+          </div>
         </div>
       </div>
     </div>

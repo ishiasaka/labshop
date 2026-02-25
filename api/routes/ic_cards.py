@@ -3,8 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from schema import ICCardCreate, UserStatus
 from datetime import datetime, timezone
 from models import AdminLog, ICCard, Purchase, User, Shelf, SystemSetting
-from ws.connection_manager import ws_connection_manager
-from ws.ws_schema import WSSchema
+from services.ws import ConnectionManager, WSSchema
 
 from schema import CardRegistrationRequest, ICCardStatus, PurchaseStatus, ScanRequest
 from services.auth import get_current_admin, TokenData

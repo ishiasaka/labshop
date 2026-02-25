@@ -69,13 +69,19 @@ pub fn run_pcsc_loop() {
 /// Try to connect to a reader and read FeliCa IDm.
 /// Returns Some((reader_name, idm_hex_string)) on success, None otherwise.
 /// Also rebuilds the reader-to-USB-port mapping when the reader list changes.
-fn try_read_card(ctx: &Context, reader_to_port: &mut HashMap<String, String>) -> Option<(String, String)> {
+fn try_read_card(
+    ctx: &Context,
+    reader_to_port: &mut HashMap<String, String>,
+) -> Option<(String, String)> {
     let len = ctx.list_readers_len().ok()?;
     let mut buf = vec![0u8; len];
     let readers = ctx.list_readers(&mut buf).ok()?;
 
     // Collect reader names and rebuild mapping if needed
-    let reader_names: Vec<String> = readers.clone().map(|r| r.to_string_lossy().into_owned()).collect();
+    let reader_names: Vec<String> = readers
+        .clone()
+        .map(|r| r.to_string_lossy().into_owned())
+        .collect();
     if reader_to_port.is_empty() || reader_names.len() != reader_to_port.len() {
         *reader_to_port = build_pcsc_to_usb_mapping(&reader_names, RC_S300_PID);
     }

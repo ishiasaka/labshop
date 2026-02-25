@@ -40,10 +40,20 @@ WORKDIR /build
 COPY Cargo.toml Cargo.lock ./
 COPY src/ ./src/
 
+RUN cargo test 2>&1
 RUN cargo build --release
 
 # ============================================================
-# Stage 3: Runtime image
+# Stage 3: Coverage (optional, run with --target coverage)
+# ============================================================
+FROM rust-builder AS coverage
+
+RUN rustup component add llvm-tools-preview
+RUN cargo install cargo-tarpaulin
+RUN cargo tarpaulin --engine llvm --out Stdout --skip-clean
+
+# ============================================================
+# Stage 4: Runtime image
 # ============================================================
 FROM ubuntu:22.04
 

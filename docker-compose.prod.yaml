@@ -1,0 +1,27 @@
+services:
+  mongodb:
+    image: mongo:8.2.4-noble
+    container_name: labshop-mongo-replica
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    command: mongod --replSet rs0 --bind_ip_all
+  
+  mongodb-init:
+    image: mongo:8.2.4-noble
+    container_name: labshop-mongo-replica-init
+    depends_on:
+      - mongodb
+    restart: no
+    command: >
+      bash -c "
+        echo 'Waiting for mongodb to start'
+        sllep 5
+        echo 'Init replica set'
+        mongosh --host mongodb:27017 --eval 'rs.initiate({_id: \"rs0\", members: [{_id:0, host:\"127.0.0.1:27017\"}]})'
+        echo 'Replica initialised'
+      "
+
+volumes:
+  mongodata:

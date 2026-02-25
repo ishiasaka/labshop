@@ -4,11 +4,8 @@ use std::path::Path;
 
 /// Known USB device IDs for Sony FeliCa readers.
 /// (vendor_id, product_id, human_name)
-const KNOWN_DEVICES: &[(&str, &str, &str)] = &[
-    ("054c", "01bb", "RC-S320"),
-    ("054c", "02e1", "RC-S330"),
-    ("054c", "0dc9", "RC-S300"),
-];
+const KNOWN_DEVICES: &[(&str, &str, &str)] =
+    &[("054c", "01bb", "RC-S320"), ("054c", "0dc9", "RC-S300")];
 
 #[derive(Debug, Clone)]
 pub struct UsbReaderInfo {
@@ -76,7 +73,10 @@ pub fn find_usb_port_for_product(product_id: &str) -> Option<String> {
 ///
 /// pcscd enumerates readers in USB bus order, so we correlate the sorted
 /// PC/SC reader names with the sorted USB sysfs paths for the same product.
-pub fn build_pcsc_to_usb_mapping(pcsc_reader_names: &[String], product_id: &str) -> HashMap<String, String> {
+pub fn build_pcsc_to_usb_mapping(
+    pcsc_reader_names: &[String],
+    product_id: &str,
+) -> HashMap<String, String> {
     let mut mapping = HashMap::new();
 
     // Get sorted USB ports for this product

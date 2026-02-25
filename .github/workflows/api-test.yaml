@@ -29,8 +29,18 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Run tests
-        run: pytest -c pytest.unit.ini -v --tb=short
+      - name: Run tests with pytest-cov
+        run: |
+          pytest -c pytest.unit.ini --cov=./ --cov-report=html
+
+      - name: Upload Coverage HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-coverage-report
+          path: htmlcov/
+          retention-days: 1
+          
+         
   e2e:
     runs-on: ubuntu-latest
 
@@ -50,6 +60,8 @@ jobs:
         run: |
           docker compose -f docker-compose.test.yaml up -d
           sleep 20 # Wait for the container to be ready
+        env:
+          SECRET_KEY: ${{ secrets.E2E_SECRET_KEY }}
       
       - name: Initalise Python
         uses: actions/setup-python@v6 

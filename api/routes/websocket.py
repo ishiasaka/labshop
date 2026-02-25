@@ -1,6 +1,6 @@
 from fastapi import APIRouter, WebSocket
-from ws.connection_manager import ws_connection_manager
-from ws.ws_schema import WSSchema
+from services.ws import ws_connection_manager
+from services.ws import WSSchema
 
 router = APIRouter(prefix="/ws")
 

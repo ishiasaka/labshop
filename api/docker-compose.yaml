@@ -11,6 +11,7 @@ services:
       ENV: e2e
       MONGODB_URL: mongodb://db-replica:27017/?replicaSet=rs0
       MONGODB_DB: labshop
+      SECRET_KEY: ${SECRET_KEY}
     
     depends_on:
       db-replica-init:

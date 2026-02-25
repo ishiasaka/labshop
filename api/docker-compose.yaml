@@ -29,6 +29,12 @@ services:
     container_name: labshop-mongo-replica
     ports:
       - "27017:27017"
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    healthcheck:
+      test: mongosh --port 27017 --eval "rs.status().ok || rs.initiate({_id:'rs0',members:[{_id:0,host:'db:27017'}]})"
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - mongo-data:/data/db
     command: mongod --replSet rs0 --bind_ip_all

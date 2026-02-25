@@ -3,23 +3,38 @@ import StudentCarousel from '@/app/components/StudentCarousel';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 import PaybackModal from '@/app/components/PaybackModal';
+import { useWebSocket } from '@/app/hooks/useWebSocket';
+import { useUsers } from '@/app/hooks/useUsers';
 import { Box } from '@mui/material';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+
+interface PaybackPayload {
+  student_name: string;
+  student_id: string;
+  debt_amount: number;
+}
+
+function isPaybackPayload(data: unknown): data is PaybackPayload {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    typeof (data as PaybackPayload).student_name === 'string' &&
+    typeof (data as PaybackPayload).student_id === 'string' &&
+    typeof (data as PaybackPayload).debt_amount === 'number'
+  );
+}
 
 export default function Home() {
-  const [paybackData, setPaybackData] = useState<{
-    name: string;
-    id: string;
-    owedAmount: number;
-  } | null>(null);
+  const [paybackData, setPaybackData] = useState<PaybackPayload | null>(null);
+  const { mutate } = useUsers();
 
-  const handleSimulatePayback = () => {
-    setPaybackData({
-      name: 'Test User',
-      id: '123',
-      owedAmount: 3000,
-    });
-  };
+  const handleWsMessage = useCallback((data: unknown) => {
+    if (isPaybackPayload(data)) {
+      setPaybackData(data);
+    }
+  }, []);
+
+  const { status } = useWebSocket({ onMessage: handleWsMessage });
 
   return (
     <Box
@@ -36,21 +51,45 @@ export default function Home() {
       <ThemeToggle />
       <StudentCarousel />
 
-      {/* Temporary Trigger Button */}
-      <Box sx={{ position: 'absolute', bottom: 16, right: 16, zIndex: 2000 }}>
-        <button
-          onClick={handleSimulatePayback}
-          style={{ padding: '8px 16px', cursor: 'pointer' }}
-        >
-          Simulate Payback
-        </button>
+      {/* WebSocket connection status indicator */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 16,
+          right: 16,
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <Box
+          data-testid="ws-status"
+          sx={{
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            backgroundColor:
+              status === 'connected'
+                ? 'success.main'
+                : status === 'connecting'
+                  ? 'warning.main'
+                  : 'error.main',
+            transition: 'background-color 0.3s ease',
+          }}
+        />
       </Box>
 
       {paybackData && (
         <PaybackModal
           open={!!paybackData}
           onClose={() => setPaybackData(null)}
-          userData={paybackData}
+          onSuccess={() => mutate()}
+          userData={{
+            name: paybackData.student_name,
+            id: paybackData.student_id,
+            owedAmount: paybackData.debt_amount,
+          }}
         />
       )}
     </Box>

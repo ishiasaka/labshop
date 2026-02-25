@@ -2,7 +2,21 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+### Environment Setup
+
+Copy the example env file and adjust values as needed:
+
+```bash
+cp .env.local.example .env.local
+```
+
+| Variable             | Description            | Default               |
+| -------------------- | ---------------------- | --------------------- |
+| `NEXT_PUBLIC_WS_URL` | WebSocket API base URL | `ws://localhost:8000` |
+
+### Run the Development Server
+
+Make sure the backend API is running (via `docker compose up` in the `api/` directory), then:
 
 ```bash
 nvm use && yarn dev

@@ -40,10 +40,20 @@ WORKDIR /build
 COPY Cargo.toml Cargo.lock ./
 COPY src/ ./src/
 
+RUN cargo test 2>&1
 RUN cargo build --release
 
 # ============================================================
-# Stage 3: Runtime image
+# Stage 3: Coverage (optional, run with --target coverage)
+# ============================================================
+FROM rust-builder AS coverage
+
+RUN rustup component add llvm-tools-preview
+RUN cargo install cargo-tarpaulin
+RUN cargo tarpaulin --engine llvm --out Stdout --skip-clean
+
+# ============================================================
+# Stage 4: Runtime image
 # ============================================================
 FROM ubuntu:22.04
 
@@ -54,11 +64,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libccid \
     libusb-1.0-0 \
     ca-certificates \
+    mpg123 \
+    alsa-utils \
+    pulseaudio-utils \
   && rm -rf /var/lib/apt/lists/*
 
-# Copy libpafe shared library
-COPY --from=libpafe-builder /usr/local/lib/libpafe.so* /usr/local/lib/
-RUN ldconfig
+# Copy libpafe shared library and recreate symlinks
+# (Docker COPY flattens symlinks, so ldconfig won't register libpafe.so;
+#  we copy the real library and create proper symlinks manually.)
+COPY --from=libpafe-builder /usr/local/lib/libpafe.so.0.0.7 /usr/local/lib/
+RUN ln -sf libpafe.so.0.0.7 /usr/local/lib/libpafe.so.0 \
+ && ln -sf libpafe.so.0.0.7 /usr/local/lib/libpafe.so \
+ && ldconfig
+
+# Copy sound files
+COPY src/paypay.mp3 /usr/local/share/sounds/paypay.mp3
+COPY src/error-2.mp3 /usr/local/share/sounds/error-2.mp3
+COPY src/admin-2.mp3 /usr/local/share/sounds/admin-2.mp3
 
 # Copy the built binary
 COPY --from=rust-builder /build/target/release/felica_scanner /usr/local/bin/felica_scanner
@@ -67,6 +89,6 @@ COPY --from=rust-builder /build/target/release/felica_scanner /usr/local/bin/fel
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-ENV API_URL=http://host.docker.internal:8000/api/scan
+ENV API_URL=http://host.docker.internal:8000/ic_cards/scan
 
 ENTRYPOINT ["/entrypoint.sh"]

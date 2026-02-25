@@ -4,6 +4,22 @@ macOSではDocker経由のUSBパススルーが不可能なため、Ubuntu実機
 
 ワークフロー: mac (git push) → Ubuntu (git pull → docker compose up)
 
+## 対応OS
+
+| OS | 対応 | 備考 |
+|----|------|------|
+| Ubuntu 22.04+ | Yes | Docker経由で実行 |
+| macOS | No | Docker USBパススルー不可 |
+| Windows | No | 別バイナリ (`felica_felicalib.exe`) を使用 |
+
+## 対応リーダー
+
+| モデル | USB ID | バックエンド |
+|--------|--------|-------------|
+| RC-S300 | `054c:0dc9` | PC/SC (`pcscd`) |
+| RC-S320 | `054c:01bb` | libpafe (`libpafe.so`) |
+| RC-S330 | `054c:02e1` | 検出のみ |
+
 ## 前提条件
 
 - Ubuntu 22.04+
@@ -11,9 +27,21 @@ macOSではDocker経由のUSBパススルーが不可能なため、Ubuntu実機
 - git
 - USB接続のFeliCaリーダー (RC-S300 / RC-S320)
 
-## 1. pn533カーネルモジュールのブラックリスト設定
+## 実行方法
+
+### Step 1: USBデバイスの確認
+
+```bash
+# リーダーがホスト側で認識されているか確認
+lsusb | grep -i sony
+# RC-S300: 054c:0dc9
+# RC-S320: 054c:01bb
+```
+
+### Step 2: pn533カーネルモジュールのブラックリスト設定（RC-S320使用時のみ）
 
 RC-S320を使用する場合、`pn533`モジュールがUSBデバイスを先に掴むのを防ぐ必要がある。
+RC-S300のみの場合はこの手順は不要。
 
 ```bash
 sudo tee /etc/modprobe.d/blacklist-pn533.conf <<EOF
@@ -23,15 +51,19 @@ EOF
 sudo modprobe -r pn533_usb pn533 2>/dev/null || true
 ```
 
-再起動後も永続する。RC-S300のみの場合はこの手順は不要。
+再起動後も永続する。
 
-## 2. リポジトリの取得と起動
+### Step 3: リポジトリの取得
 
 ```bash
-git clone <repository-url>
+git clone git@github.com:ishiasaka/labshop.git
 cd labshop/scanner/scanner_rust
+```
 
-# API_URLを指定して起動（デフォルト: http://localhost:8000/api/scan）
+### Step 4: Docker Composeで起動
+
+```bash
+# ビルド＆起動（フォアグラウンド）
 docker compose up --build
 
 # バックグラウンド起動
@@ -44,16 +76,41 @@ APIサーバーが別のホストにある場合:
 API_URL=http://192.168.1.100:8000/api/scan docker compose up --build
 ```
 
-## 3. USBデバイスの確認
+### Step 5: 動作確認
 
 ```bash
-# ホスト側でリーダーが認識されているか確認
-lsusb | grep -i sony
-# RC-S300: 054c:0dc9
-# RC-S320: 054c:01bb
+# コンテナログを確認
+docker compose logs -f
 ```
 
-## 4. 更新時の手順
+正常に起動すると以下のように表示される:
+
+```
+=== FeliCa Multi-Reader Scanner (Linux/Docker) ===
+API_URL: http://localhost:8000/api/scan
+[INFO] Found RC-S300 at USB port 1-1.3.3
+[INFO] Found RC-S320 at USB port 1-1.1
+[RC-S300/PCSC] Starting backend...
+[RC-S320/libpafe] Starting backend...
+[RC-S320/libpafe] Ready. Waiting for card touch...
+```
+
+カードをタッチすると:
+
+```
+[RC-S300/PCSC] IDm=011303006B223D04 USB_Port=1-1.3.3
+POST OK: 200
+```
+
+### 停止
+
+```bash
+# フォアグラウンドの場合: Ctrl+C
+# バックグラウンドの場合:
+docker compose down
+```
+
+## 更新時の手順
 
 ```bash
 cd labshop/scanner/scanner_rust
@@ -84,8 +141,19 @@ docker compose restart
 ```bash
 # pn533モジュールがロードされていないか確認
 lsmod | grep pn533
-# 表示される場合は「1. pn533カーネルモジュールのブラックリスト設定」を実施
+# 表示される場合は「Step 2: pn533カーネルモジュールのブラックリスト設定」を実施
 ```
+
+### API接続エラー (`Connection refused`)
+
+スキャナーは `API_URL` (デフォルト: `http://localhost:8000/api/scan`) にPOSTリクエストを送信する。
+APIサーバーが起動していない場合、以下のエラーが表示される:
+
+```
+[POST] Error for 011303006B223D04: Connection Failed: Connect error: Connection refused (os error 111)
+```
+
+APIサーバーを起動してから再試行すること。
 
 ### コンテナログの確認
 

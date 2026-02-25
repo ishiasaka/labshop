@@ -1,7 +1,15 @@
 from fastapi import WebSocket
-from typing import Dict
-from ws.ws_schema import WSSchema
+from typing import Dict, Optional
 
+from pydantic import BaseModel
+
+class WSSchema(BaseModel):
+    action: str
+    student_id: Optional[str] = None
+    shelf_id: Optional[str] = None
+    student_name: Optional[str] = None
+    debt_amount: Optional[int] = None
+    price: Optional[int] = None
 
 class ConnectionManager:
     __tablet_connection: WebSocket | None
@@ -33,3 +41,4 @@ class ConnectionManager:
 
 
 ws_connection_manager = ConnectionManager()
+

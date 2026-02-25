@@ -1,0 +1,33 @@
+name: API CI
+
+on:
+  push:
+    paths:
+      - 'api/**'
+  pull_request:
+    paths:
+      - 'api/**'
+
+jobs:
+  api-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./api  
+    env:
+      MONGODB_URL: "mongodb://localhost:27017/unused" 
+      MONGODB_DB: "test_db"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Syntax Check
+        run: python -m compileall .

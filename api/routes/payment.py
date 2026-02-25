@@ -24,8 +24,6 @@ async def create_payment(p: PaymentCreate):
             amount = int(p.amount_paid)
             if amount <= 0:
                 raise HTTPException(400, "Payment amount must be greater than zero.")
-            if student.account_balance < amount:
-                raise HTTPException(400, "Your debt is less than what you want to pay")
 
             if p.idempotency_key:
                 existing = await Payment.find_one(Payment.idempotency_key == p.idempotency_key, session=session)

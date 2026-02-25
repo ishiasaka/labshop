@@ -11,8 +11,7 @@ from schema import ICCardCreate, ICCardStatus, CardRegistrationRequest, ScanRequ
 from services.auth import TokenData
 from fastapi import HTTPException
 from routes.ic_cards import register_card, create_ic_card, card_scan
-from ws.connection_manager import ConnectionManager
-from ws.ws_schema import WSSchema
+from services.ws import ConnectionManager, WSSchema
 
 
 

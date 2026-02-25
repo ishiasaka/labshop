@@ -31,7 +31,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               50.00
             </h3>
           </div>
@@ -56,7 +56,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               120.50
             </h3>
           </div>
@@ -81,7 +81,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               50.00
             </h3>
           </div>
@@ -106,7 +106,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               120.50
             </h3>
           </div>
@@ -131,7 +131,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               50.00
             </h3>
           </div>
@@ -156,7 +156,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               120.50
             </h3>
           </div>
@@ -185,7 +185,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               50.00
             </h3>
           </div>
@@ -210,7 +210,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               120.50
             </h3>
           </div>
@@ -235,7 +235,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               50.00
             </h3>
           </div>
@@ -260,7 +260,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               120.50
             </h3>
           </div>
@@ -285,7 +285,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               50.00
             </h3>
           </div>
@@ -310,7 +310,7 @@ exports[`StudentCarousel matches snapshot 1`] = `
             <h3
               class="MuiTypography-root MuiTypography-h3 css-ktqqns-MuiTypography-root"
             >
-              $
+              ¥
               120.50
             </h3>
           </div>

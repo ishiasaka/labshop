@@ -11,6 +11,11 @@ services:
       ENV: e2e
       MONGODB_URL: mongodb://db-replica:27017/?replicaSet=rs0
       MONGODB_DB: labshop
+      SECRET_KEY: "375d7329c23456df4c198c01e092618889fdcdd2bbbda1c5ee5eb99e06ff580b"
+    
+    depends_on:
+      db-replica-init:
+        condition: service_completed_successfully
   
   # db:
   #   image: mongo:8.2.4-noble
@@ -35,10 +40,12 @@ services:
     restart: "no" # We only want this to run once and then stop
     command: >
       bash -c "
-        echo 'Waiting for MongoDB to start...'
-        sleep 5
+        until mongosh --host db-replica:27017 --eval 'db.runCommand({ping: 1})'; do
+          echo 'Waiting for MongoDB to be ready...'
+          sleep 2
+        done
         echo 'Initializing replica set...'
-        mongosh --host db-replica:27017 --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: \"127.0.0.1:27017\"}]})'
+        mongosh --host db-replica:27017 --eval 'rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"db-replica:27017\"}]})'
         echo 'Replica set initialized.'
       "
     

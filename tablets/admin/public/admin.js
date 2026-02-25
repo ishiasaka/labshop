@@ -1,5 +1,21 @@
-const API_PREFIX = 'http://localhost:8000';
+const API_PREFIX = '/api';
 const LOGIN_PAGE = '/login';
+
+let allUsersPage = 1;
+let allUsersPageSize = 10;
+let allUsersCache = [];
+
+let debtPage = 1;
+let debtPageSize = 10;
+let debtCache = [];
+
+let cardsPage = 1;
+let cardsPageSize = 10;
+let cardsCache = [];
+
+let activityPage = 1;
+let activityPageSize = 10;
+let activityCache = [];
 
 function $(id) {
   return document.getElementById(id);
@@ -20,12 +36,11 @@ async function apiFetch(path, options = {}) {
 
 async function requireLogin() {
   try {
-    const res = await apiFetch('/');
+    const res = await apiFetch('/me', { credentials: 'include' });
     if (!res.ok) {
       window.location.href = LOGIN_PAGE;
       return false;
     }
-
     const me = await res.json();
     const greeting = $('admin_greeting');
     if (greeting) {
@@ -50,37 +65,28 @@ async function logout() {
 }
 
 async function readErrorMessage(res) {
-  let payload;
   try {
-    payload = await res.json();
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const payload = await res.json();
+      const detail = payload?.detail ?? payload?.message ?? payload;
+      if (typeof detail === 'string') return detail;
+      if (Array.isArray(detail)) {
+        return detail
+          .map((d) => d?.msg || d?.message || JSON.stringify(d))
+          .join('\n');
+      }
+      return JSON.stringify(detail, null, 2);
+    }
+    return await res.text();
   } catch {
-    payload = { detail: await res.text() };
+    return `Request failed (${res.status})`;
   }
-
-  const detail = payload?.detail;
-
-  if (typeof detail === 'string') return detail;
-
-  if (Array.isArray(detail)) {
-    return detail
-      .map((d) => d?.msg || d?.message || JSON.stringify(d))
-      .join('\n');
-  }
-
-  if (detail && typeof detail === 'object') {
-    if (detail.message) return detail.message;
-    return JSON.stringify(detail, null, 2);
-  }
-
-  if (payload?.message) return payload.message;
-  return JSON.stringify(payload, null, 2);
 }
-
 async function loadData() {
   const ok = await requireLogin();
   if (!ok) return;
-
-  await Promise.all([loadUsers(), loadActivity(), loadMaxDebtLimit()]);
+  await Promise.all([loadUsers(), loadActivity(), loadAllUsers(), loadCards()]);
 }
 
 async function loadUsers() {
@@ -94,39 +100,184 @@ async function loadUsers() {
       );
       return;
     }
+
     const data = await res.json();
-    const tbody = document.querySelector('#userTable tbody');
-    if (!tbody) return;
 
-    const users = data.users || [];
-    tbody.innerHTML = users
-      .map((u) => {
-        const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
-        const debt = Number(u.account_balance || 0);
-        const debtClass = debt > 0 ? 'debt-high' : 'debt-zero';
-        return `<tr>
-          <td>${u.student_id}</td>
-          <td>${fullName}</td>
-          <td class="${debtClass}">¥${debt}</td>
-        </tr>`;
-      })
-      .join('');
+    // show only users with debt > 0
+    debtCache = (data.users || []).filter(
+      (u) => Number(u.account_balance ?? 0) > 0
+    );
 
-    filterStudents();
+    renderDebtTable();
   } catch (e) {
     console.error('Load users failed', e);
   }
 }
+function renderDebtTable() {
+  const tbody = document.querySelector('#userTable tbody');
+  if (!tbody) return;
+  const q = (document.getElementById('studentSearch')?.value || '')
+    .toLowerCase()
+    .trim();
 
+  const filtered = q
+    ? debtCache.filter((u) => {
+        const sid = String(u.student_id ?? '').toLowerCase();
+        const name = `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase();
+        return sid.includes(q) || name.includes(q);
+      })
+    : debtCache;
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / debtPageSize));
+  if (debtPage > totalPages) debtPage = totalPages;
+  if (debtPage < 1) debtPage = 1;
+
+  const start = (debtPage - 1) * debtPageSize;
+  const pageUsers = filtered.slice(start, start + debtPageSize);
+
+  tbody.innerHTML = pageUsers
+    .map((u) => {
+      const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+      const debt = Number(u.account_balance ?? 0);
+      return `<tr>
+        <td>${u.student_id}</td>
+        <td>${fullName}</td>
+        <td class="debt-high">¥${debt}</td>
+      </tr>`;
+    })
+    .join('');
+
+  const prev = document.getElementById('debtPrev');
+  const next = document.getElementById('debtNext');
+  const info = document.getElementById('debtPageInfo');
+
+  if (prev) prev.disabled = debtPage <= 1;
+  if (next) next.disabled = debtPage >= totalPages;
+  if (info) info.innerText = `${debtPage} / ${totalPages}`;
+}
+function debtNextPage() {
+  debtPage++;
+  renderDebtTable();
+}
+
+function debtPrevPage() {
+  debtPage--;
+  renderDebtTable();
+}
+
+window.debtNextPage = debtNextPage;
+window.debtPrevPage = debtPrevPage;
 function filterStudents() {
-  const input = $('studentSearch');
-  const query = (input?.value || '').toLowerCase();
+  debtPage = 1;
+  renderDebtTable();
+}
+window.filterStudents = filterStudents;
 
-  document.querySelectorAll('#userTable tbody tr').forEach((row) => {
-    row.style.display = row.innerText.toLowerCase().includes(query)
-      ? ''
-      : 'none';
-  });
+function filterAllUsers() {
+  allUsersPage = 1;
+  renderAllUsersTable();
+}
+window.filterAllUsers = filterAllUsers;
+
+// Load ALL users (Admin CRUD table)
+async function loadAllUsers() {
+  const res = await apiFetch('/users/');
+  if (!res.ok) {
+    console.error(
+      'loadAllUsers failed',
+      res.status,
+      await readErrorMessage(res)
+    );
+    return;
+  }
+
+  const data = await res.json();
+  allUsersCache = data.users || [];
+
+  renderAllUsersTable();
+}
+function renderAllUsersTable() {
+  const tbody = document.querySelector('#allUserTable tbody');
+  if (!tbody) return;
+
+  const q = (document.getElementById('allUserSearch')?.value || '')
+    .toLowerCase()
+    .trim();
+
+  const filtered = q
+    ? allUsersCache.filter((u) => {
+        const sid = String(u.student_id ?? '').toLowerCase();
+        const name = `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase();
+        return sid.includes(q) || name.includes(q);
+      })
+    : allUsersCache;
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / allUsersPageSize));
+  if (allUsersPage > totalPages) allUsersPage = totalPages;
+  if (allUsersPage < 1) allUsersPage = 1;
+
+  const start = (allUsersPage - 1) * allUsersPageSize;
+  const pageUsers = filtered.slice(start, start + allUsersPageSize);
+
+  tbody.innerHTML = pageUsers
+    .map((u) => {
+      const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+      const status = String(u.status || '').toLowerCase();
+      const balance = Number(u.account_balance || 0);
+      const isActive = status === 'active';
+      const nextStatus = isActive ? 'inactive' : 'active';
+      return `<tr>
+        <td>${u.student_id}</td>
+        <td>${fullName}</td>
+        <td>${status}</td>
+        <td>¥${balance}</td>
+        <td>
+          <button class="btn-danger" onclick="toggleUserStatus(${u.student_id}, '${nextStatus}')">
+            ${isActive ? 'Deactivate' : 'Activate'}
+          </button>
+        </td>
+      </tr>`;
+    })
+    .join('');
+
+  document.getElementById('allUsersPrev').disabled = allUsersPage <= 1;
+  document.getElementById('allUsersNext').disabled = allUsersPage >= totalPages;
+
+  const info = document.getElementById('allUsersPageInfo');
+  if (info) info.innerText = `${allUsersPage} / ${totalPages}`;
+}
+function allUsersNextPage() {
+  allUsersPage++;
+  renderAllUsersTable();
+}
+
+function allUsersPrevPage() {
+  allUsersPage--;
+  renderAllUsersTable();
+}
+
+async function toggleUserStatus(studentId, status) {
+  try {
+    const res = await apiFetch(
+      `/users/${studentId}/status?status=${encodeURIComponent(status)}`,
+      { method: 'PATCH' }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text);
+        alert(data.detail || text);
+      } catch {
+        alert(text);
+      }
+      return;
+    }
+    await loadAllUsers();
+    await loadUsers();
+  } catch (e) {
+    alert('Network error: ' + (e?.message || String(e)));
+  }
 }
 
 async function loadActivity() {
@@ -144,7 +295,7 @@ async function loadActivity() {
     const purchases = pData.purchases || [];
     const payments = payData.payments || [];
 
-    const all = [
+    activityCache = [
       ...purchases.map((x) => ({
         time: x.created_at,
         id: x.student_id,
@@ -159,27 +310,57 @@ async function loadActivity() {
         amount: x.amount_paid,
         className: 'payment',
       })),
-    ]
-      .sort((a, b) => new Date(b.time) - new Date(a.time))
-      .slice(0, 10);
+    ].sort((a, b) => new Date(b.time) - new Date(a.time));
 
-    const tbody = document.querySelector('#activityTable tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = all
-      .map(
-        (a) => `<tr>
-          <td>${new Date(a.time).toLocaleTimeString()}</td>
-          <td>ID: ${a.id}</td>
-          <td class="${a.className}">${a.type}</td>
-          <td>¥${a.amount}</td>
-        </tr>`
-      )
-      .join('');
+    renderActivityTable();
   } catch (e) {
     console.error('Activity load failed', e);
   }
 }
+function renderActivityTable() {
+  const tbody = document.querySelector('#activityTable tbody');
+  if (!tbody) return;
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(activityCache.length / activityPageSize)
+  );
+  if (activityPage > totalPages) activityPage = totalPages;
+  if (activityPage < 1) activityPage = 1;
+
+  const start = (activityPage - 1) * activityPageSize;
+  const pageItems = activityCache.slice(start, start + activityPageSize);
+
+  tbody.innerHTML = pageItems
+    .map(
+      (a) => `<tr>
+        <td>${new Date(a.time).toLocaleTimeString()}</td>
+        <td>ID: ${a.id}</td>
+        <td class="${a.className}">${a.type}</td>
+        <td>¥${a.amount}</td>
+      </tr>`
+    )
+    .join('');
+
+  const prev = document.getElementById('activityPrev');
+  const next = document.getElementById('activityNext');
+  const info = document.getElementById('activityPageInfo');
+
+  if (prev) prev.disabled = activityPage <= 1;
+  if (next) next.disabled = activityPage >= totalPages;
+  if (info) info.innerText = `${activityPage} / ${totalPages}`;
+}
+function activityNextPage() {
+  activityPage++;
+  renderActivityTable();
+}
+function activityPrevPage() {
+  activityPage--;
+  renderActivityTable();
+}
+
+window.activityNextPage = activityNextPage;
+window.activityPrevPage = activityPrevPage;
 
 async function createUser() {
   const ok = await requireLogin();
@@ -194,7 +375,6 @@ async function createUser() {
       alert('Please enter Student ID, First Name, and Last Name.');
       return;
     }
-
     const res = await apiFetch('/users/', {
       method: 'POST',
       body: JSON.stringify({ student_id: sid, first_name, last_name }),
@@ -209,7 +389,6 @@ async function createUser() {
       await loadActivity();
       return;
     }
-
     const msg = await readErrorMessage(res);
     alert(`Error (${res.status}): ${msg}`);
   } catch (e) {
@@ -248,6 +427,104 @@ async function updateMaxDebt() {
     alert('Network Error: ' + (e?.message || String(e)));
   }
 }
+async function loadCards() {
+  const res = await apiFetch('/ic_cards/');
+  if (!res.ok) {
+    console.error('loadCards failed', res.status, await readErrorMessage(res));
+    return;
+  }
+
+  cardsCache = await res.json();
+  renderCardsTable();
+}
+function renderCardsTable() {
+  const tbody = document.querySelector('#cardTable tbody');
+  if (!tbody) return;
+
+  const q = (document.getElementById('cardSearch')?.value || '')
+    .toLowerCase()
+    .trim();
+
+  const filtered = q
+    ? (cardsCache || []).filter((c) => {
+        const uid = String(c.uid || '').toLowerCase();
+        const sid = String(c.student_id ?? '').toLowerCase();
+        const status = String(c.status || '').toLowerCase();
+        return uid.includes(q) || sid.includes(q) || status.includes(q);
+      })
+    : cardsCache || [];
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / cardsPageSize));
+  if (cardsPage > totalPages) cardsPage = totalPages;
+  if (cardsPage < 1) cardsPage = 1;
+
+  const start = (cardsPage - 1) * cardsPageSize;
+  const pageCards = filtered.slice(start, start + cardsPageSize);
+
+  tbody.innerHTML = pageCards
+    .map((c) => {
+      const uid = c.uid || '';
+      const sid = c.student_id ?? '';
+      const status = c.status || '';
+      const unlinkBtn =
+        sid !== ''
+          ? `<button class="btn" onclick="unlinkCard('${uid}')">Unlink</button>`
+          : '';
+
+      const deactivateBtn = `<button class="btn" onclick="deactivateCard('${uid}')">Deactivate</button>`;
+      return `<tr>
+        <td>${uid}</td>
+        <td>${sid === '' ? '-' : sid}</td>
+        <td>${status}</td>
+        <td class="actions">
+          ${unlinkBtn}
+          ${deactivateBtn}
+        </td>
+      </tr>`;
+    })
+    .join('');
+
+  const prev = document.getElementById('cardsPrev');
+  const next = document.getElementById('cardsNext');
+  const info = document.getElementById('cardsPageInfo');
+
+  if (prev) prev.disabled = cardsPage <= 1;
+  if (next) next.disabled = cardsPage >= totalPages;
+  if (info) info.innerText = `${cardsPage} / ${totalPages}`;
+}
+function cardsNextPage() {
+  cardsPage++;
+  renderCardsTable();
+}
+
+function cardsPrevPage() {
+  cardsPage--;
+  renderCardsTable();
+}
+
+function filterCards() {
+  cardsPage = 1;
+  renderCardsTable();
+}
+window.filterCards = filterCards;
+
+async function unlinkCard(uid) {
+  const res = await apiFetch(`/ic_cards/${uid}/unlink`, { method: 'POST' });
+  if (!res.ok) {
+    alert(`Error (${res.status}): ` + (await readErrorMessage(res)));
+    return;
+  }
+  await loadCards();
+}
+
+async function deactivateCard(uid) {
+  const res = await apiFetch(`/ic_cards/${uid}/deactivate`, { method: 'POST' });
+  if (!res.ok) {
+    alert(`Error (${res.status}): ` + (await readErrorMessage(res)));
+    return;
+  }
+  await loadCards();
+}
 
 async function registerCard() {
   const ok = await requireLogin();
@@ -281,7 +558,6 @@ async function registerCard() {
       await loadActivity();
       return;
     }
-
     const msg = await readErrorMessage(res);
     alert(`Error (${res.status}): ${msg}`);
   } catch (e) {
@@ -330,6 +606,21 @@ window.registerCard = registerCard;
 window.updateMaxDebt = updateMaxDebt;
 window.filterStudents = filterStudents;
 window.loadUsers = loadUsers;
+window.loadAllUsers = loadAllUsers;
+window.toggleUserStatus = toggleUserStatus;
+window.loadCards = loadCards;
+window.filterCards = filterCards;
+window.unlinkCard = unlinkCard;
+window.deactivateCard = deactivateCard;
+window.filterAllUsers = filterAllUsers;
+window.allUsersNextPage = allUsersNextPage;
+window.allUsersPrevPage = allUsersPrevPage;
+
+window.debtNextPage = debtNextPage;
+window.debtPrevPage = debtPrevPage;
+
+window.cardsNextPage = cardsNextPage;
+window.cardsPrevPage = cardsPrevPage;
 
 window.addEventListener('load', () => {
   loadData();

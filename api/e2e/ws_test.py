@@ -2,7 +2,7 @@ import pytest
 import websockets as ws
 import os
 import json
-from ws.ws_schema import WSSchema
+from services.ws import WSSchema
 
 
 @pytest.mark.asyncio

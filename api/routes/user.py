@@ -14,6 +14,13 @@ router = APIRouter(prefix="/users")
 async def list_users():
     return {"users": await User.find().to_list()}
 
+@router.get("/{student_id}", response_model=UserOut)
+async def get_user(student_id: int):
+    user = await User.find_one(User.student_id == student_id)
+    if not user:
+        raise HTTPException(404, "User not found")
+    return user
+
 @router.patch("/{student_id}/status")
 async def set_user_status(
     student_id: int,

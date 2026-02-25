@@ -51,6 +51,8 @@ async def create_ic_card(card: ICCardCreate):
 
 @router.post("/{uid}/register", description="Register an IC card to a student")
 async def register_card(uid: str, data: CardRegistrationRequest, admin: TokenData = Depends(get_current_admin)):
+    
+    uid = uid.strip().lower()    
 
     student = await User.find_one(User.student_id == data.student_id)
     if not student:

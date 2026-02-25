@@ -10,8 +10,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 import bcrypt
 from models import UserStatus, PaymentStatus, ICCardStatus, PurchaseStatus
-from ws.connection_manager import ws_connection_manager
-from ws.ws_schema import WSSchema
+from services.ws import ws_connection_manager, WSSchema
 from models import (
     User, Admin, Purchase, Payment,
     ICCard, Shelf, AdminLog, SystemSetting

@@ -1,4 +1,4 @@
-.PHONY: dev unittest docker-db e2e-dev e2e docker-up-e2e docker-down-e2e clean-db
+.PHONY: dev unittest docker-db e2e-dev e2e docker-up-e2e docker-down-e2e clean-db unittest-cov
 
 dev:
 	fastapi dev main.py
@@ -23,3 +23,6 @@ docker-up-e2e:
 
 docker-down-e2e:
 	docker compose -f docker-compose.test.yaml down --rmi local -v
+
+unittest-cov:
+	pytest -c pytest.unit.ini --cov=./ --cov-report=html

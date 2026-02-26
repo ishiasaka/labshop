@@ -57,6 +57,17 @@ services:
     depends_on:
       - api
 
+  scanner:
+    build:
+      context: ./scanner/scanner_rust
+      dockerfile: Dockerfile
+    image: labshop-scanner-prod:latest
+    
+    environment:
+      API_URL: http://api:8000/ic_cards/scan
+    depends_on:
+      - api
+
   
   db-replica:
     image: mongo:8.2.4-noble

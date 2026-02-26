@@ -1,0 +1,61 @@
+name: Scanner CI
+
+on:
+  push:
+    paths:
+      - "scanner/scanner_rust/**"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libpcsclite-dev
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt, llvm-tools-preview
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            scanner/scanner_rust/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('scanner/scanner_rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Check format
+        working-directory: scanner/scanner_rust
+        run: cargo fmt --check
+
+      - name: Clippy
+        working-directory: scanner/scanner_rust
+        run: cargo clippy -- -D warnings
+
+      - name: Build
+        working-directory: scanner/scanner_rust
+        run: cargo build --release
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Test coverage
+        working-directory: scanner/scanner_rust
+        run: |
+          echo '## Test Coverage' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cargo llvm-cov --text >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

@@ -10,6 +10,16 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
+  collectCoverageFrom: [
+    'app/**/*.{ts,tsx}',
+    '!app/**/*.d.ts',
+    '!app/layout.tsx',
+    '!app/page.tsx',
+    '!app/provider.tsx',
+    '!app/theme.ts',
+    '!app/locales/**',
+  ],
+  coverageReporters: ['text', 'lcov'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

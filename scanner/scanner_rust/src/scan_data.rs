@@ -129,7 +129,7 @@ fn days_to_ymd(days: u64) -> (u64, u64, u64) {
     (y, mo, d + 1)
 }
 
-pub fn post_scan_data(idm: &str, usb_port: Option<String>, reader_type: &str) {
+pub fn post_scan_data(idm: &str, usb_port: Option<String>, _reader_type: &str) {
     let port_num = usb_port.as_deref().and_then(usb_port_to_int);
 
     // Ports 1-4 duplicate-scan guard.

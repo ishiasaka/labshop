@@ -23,6 +23,7 @@ app.use(
       httpOnly: true,
       sameSite: 'lax',
       secure: false,
+      maxAge: 6 * 60 * 1000, // 6 minutes
     },
   })
 );

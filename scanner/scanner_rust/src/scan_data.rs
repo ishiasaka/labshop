@@ -1,8 +1,25 @@
 use serde::Serialize;
+use std::collections::HashMap;
 use std::env;
 use std::process::Command;
+use std::sync::{Mutex, OnceLock};
 use std::thread;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+
+// Per-card state for ports 1-4.
+enum CardState {
+    // First response sound played; within 3s → play again.mp3 once, skip POST.
+    FirstPlayed(Instant),
+    // again.mp3 played; within 2s → skip POST and sound entirely.
+    AgainPlayed(Instant),
+}
+
+static PORT_STATES: OnceLock<Mutex<HashMap<(u32, String), CardState>>> = OnceLock::new();
+
+fn port_states() -> &'static Mutex<HashMap<(u32, String), CardState>> {
+    PORT_STATES.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
 
 #[derive(Serialize, Debug, Clone)]
 pub struct ScanData {
@@ -45,6 +62,10 @@ fn usb_port_to_int(port: &str) -> Option<u32> {
 const SOUND_OK: &str = "/usr/local/share/sounds/paypay.mp3";
 const SOUND_ADMIN: &str = "/usr/local/share/sounds/admin-2.mp3";
 const SOUND_ERR: &str = "/usr/local/share/sounds/error-2.mp3";
+const SOUND_PAYBACK: &str = "/usr/local/share/sounds/payback-3.mp3";
+const SOUND_AGAIN: &str = "/usr/local/share/sounds/again.mp3";
+const SOUND_ACTIVATE: &str = "/usr/local/share/sounds/activate.mp3";
+const SOUND_REGISTER: &str = "/usr/local/share/sounds/register.mp3";
 
 /// Play a sound file in a background thread (non-blocking).
 pub fn play_sound(path: &'static str) {
@@ -112,6 +133,37 @@ fn days_to_ymd(days: u64) -> (u64, u64, u64) {
 pub fn post_scan_data(idm: &str, usb_port: Option<String>, reader_type: &str) {
     let port_num = usb_port.as_deref().and_then(usb_port_to_int);
 
+    // Ports 1-4 duplicate-scan guard.
+    //   First detection          → POST + response sound, record FirstPlayed.
+    //   Re-detected within 3s   → skip POST, play again.mp3 once, record AgainPlayed.
+    //   Re-detected within 2s   → skip POST, no sound.
+    //   Absent >2s              → reset to fresh.
+    if matches!(port_num, Some(1) | Some(2) | Some(3) | Some(4)) {
+        let port = port_num.unwrap();
+        let key = (port, idm.to_string());
+        let now = Instant::now();
+
+        let state = port_states().lock().unwrap().remove(&key);
+        match state {
+            Some(CardState::FirstPlayed(at)) if now.duration_since(at) < Duration::from_secs(3) => {
+                // Same card within 3s — skip POST, play again.mp3 once.
+                port_states().lock().unwrap().insert(key, CardState::AgainPlayed(now));
+                play_sound(SOUND_AGAIN);
+                return;
+            }
+            Some(CardState::AgainPlayed(last)) if now.duration_since(last) < Duration::from_secs(3) => {
+                // Card still held — skip POST, play again.mp3.
+                port_states().lock().unwrap().insert(key, CardState::AgainPlayed(now));
+                play_sound(SOUND_AGAIN);
+                return;
+            }
+            _ => {
+                // Fresh scan (first ever, or absent >2/3s).
+                port_states().lock().unwrap().insert(key, CardState::FirstPlayed(now));
+            }
+        }
+    }
+
     // Port 5: play sound immediately before sending data.
     if port_num == Some(5) {
         play_sound(SOUND_ADMIN);
@@ -138,6 +190,26 @@ pub fn post_scan_data(idm: &str, usb_port: Option<String>, reader_type: &str) {
             } else if port_num != Some(5) {
                 eprintln!("[POST] HTTP {}: {}", status, data.idm);
                 play_sound(SOUND_ERR);
+            }
+        }
+        Err(ureq::Error::Status(400, _)) => {
+            println!("[POST] 400: {}", data.idm);
+            if matches!(port_num, Some(1) | Some(2) | Some(3) | Some(4)) {
+                play_sound(SOUND_PAYBACK);
+            } else if port_num != Some(5) {
+                play_sound(SOUND_OK);
+            }
+        }
+        Err(ureq::Error::Status(403, _)) => {
+            println!("[POST] 403: {}", data.idm);
+            if port_num != Some(5) {
+                play_sound(SOUND_ACTIVATE);
+            }
+        }
+        Err(ureq::Error::Status(404, _)) => {
+            println!("[POST] 404: {}", data.idm);
+            if port_num != Some(5) {
+                play_sound(SOUND_REGISTER);
             }
         }
         Err(e) => {

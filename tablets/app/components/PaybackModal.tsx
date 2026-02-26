@@ -192,6 +192,12 @@ export default function PaybackModal({
               <TextField
                 placeholder={t.payback.enterAmount}
                 type="number"
+                slotProps={{
+                  htmlInput: {
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*',
+                  },
+                }}
                 value={otherAmount}
                 onChange={(e) => setOtherAmount(e.target.value)}
                 autoFocus

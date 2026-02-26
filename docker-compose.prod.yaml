@@ -68,7 +68,6 @@ services:
   
   db-replica:
     image: mongo:8.2.4-noble
-    container_name: labshop-mongo-replica
     ports:
       - "27017:27017"
     volumes:
@@ -76,7 +75,6 @@ services:
     command: mongod --replSet rs0 --bind_ip_all
   db-replica-init:
     image: mongo:8.2.4-noble
-    container_name: labshop-mongo-replica-init
     depends_on:
       - db-replica
     restart: "no" # We only want this to run once and then stop

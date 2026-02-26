@@ -173,7 +173,7 @@ async def unlink_card(uid: str, admin: TokenData = Depends(get_current_admin)):
 async def card_scan(scan: ScanRequest):
     uid = scan.normalized_uid
     usb_port = scan.usb_port
-
+    print(scan)
     now = scan.timestamp or datetime.now(timezone.utc)
     card = await ICCard.find_one(ICCard.uid == uid)
     

@@ -20,7 +20,6 @@ fn port_states() -> &'static Mutex<HashMap<(u32, String), CardState>> {
     PORT_STATES.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
-
 #[derive(Serialize, Debug, Clone)]
 pub struct ScanData {
     pub idm: String,
@@ -147,19 +146,30 @@ pub fn post_scan_data(idm: &str, usb_port: Option<String>, reader_type: &str) {
         match state {
             Some(CardState::FirstPlayed(at)) if now.duration_since(at) < Duration::from_secs(3) => {
                 // Same card within 3s — skip POST, play again.mp3 once.
-                port_states().lock().unwrap().insert(key, CardState::AgainPlayed(now));
+                port_states()
+                    .lock()
+                    .unwrap()
+                    .insert(key, CardState::AgainPlayed(now));
                 play_sound(SOUND_AGAIN);
                 return;
             }
-            Some(CardState::AgainPlayed(last)) if now.duration_since(last) < Duration::from_secs(3) => {
+            Some(CardState::AgainPlayed(last))
+                if now.duration_since(last) < Duration::from_secs(3) =>
+            {
                 // Card still held — skip POST, play again.mp3.
-                port_states().lock().unwrap().insert(key, CardState::AgainPlayed(now));
+                port_states()
+                    .lock()
+                    .unwrap()
+                    .insert(key, CardState::AgainPlayed(now));
                 play_sound(SOUND_AGAIN);
                 return;
             }
             _ => {
                 // Fresh scan (first ever, or absent >2/3s).
-                port_states().lock().unwrap().insert(key, CardState::FirstPlayed(now));
+                port_states()
+                    .lock()
+                    .unwrap()
+                    .insert(key, CardState::FirstPlayed(now));
             }
         }
     }

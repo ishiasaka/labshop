@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from schema import ICCardCreate, UserStatus
 from datetime import datetime, timezone
 from models import AdminLog, ICCard, Purchase, User, Shelf, SystemSetting
-from services.ws import ws_connection_manager, WSSchema
+from services.ws import WSSchema, ws_connection_manager
 
 from schema import CardRegistrationRequest, ICCardStatus, PurchaseStatus, ScanRequest
 from services.auth import get_current_admin, TokenData
@@ -207,12 +207,15 @@ async def card_scan(scan: ScanRequest):
         if getattr(student, "status", None) == UserStatus.inactive:
             return {"status": "error", "message": "User is inactive"}
 
-        await ws_connection_manager.send_payload_to_tablet(WSSchema(
-            action="PAY_BACK",
-            student_id=str(student.student_id),
-            student_name=student.first_name,
-            debt_amount=student.account_balance
-        ))
+        try:
+            await ws_connection_manager.send_payload_to_tablet(WSSchema(
+                action="PAY_BACK",
+                student_id=str(student.student_id),
+                student_name=student.first_name,
+                debt_amount=student.account_balance
+            ))
+        except ConnectionError:
+            return {"status": "error", "message": "No tablet connected"}
         return {
             "status": "identified",
             "name": student.first_name,

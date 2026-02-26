@@ -10,16 +10,19 @@ import {
   Box,
   IconButton,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { translations } from '../locales';
+import { usePayment } from '../hooks/usePayment';
 
 interface PaybackModalProps {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   userData: {
     name: string;
     id: string;
@@ -32,6 +35,7 @@ type PaymentStatus = 'idle' | 'processing' | 'success';
 export default function PaybackModal({
   open,
   onClose,
+  onSuccess,
   userData,
 }: PaybackModalProps) {
   const { language } = useLanguage();
@@ -39,35 +43,47 @@ export default function PaybackModal({
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [otherAmount, setOtherAmount] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('idle');
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const { pay } = usePayment();
 
   const handleClose = () => {
-    if (paymentStatus === 'processing') return; // Prevent closing while processing
+    if (paymentStatus === 'processing') return;
     setShowOtherInput(false);
     setOtherAmount('');
     setPaymentStatus('idle');
+    setPaymentError(null);
     onClose();
   };
 
-  const simulatePayment = (amount: number | string) => {
+  const processPayment = async (amount: number) => {
+    setPaymentError(null);
     setPaymentStatus('processing');
-    console.log(`Processing payment: ${amount}`);
-
-    setTimeout(() => {
+    try {
+      await pay({
+        student_id: Number(userData.id),
+        amount_paid: amount,
+      });
       setPaymentStatus('success');
-      console.log('Payment successful');
-
+      if (onSuccess) onSuccess();
       setTimeout(() => {
         handleClose();
       }, 2000);
-    }, 1500);
+    } catch {
+      setPaymentStatus('idle');
+      setPaymentError(t.payback.error);
+    }
   };
 
   const handlePresetClick = (amount: number) => {
-    simulatePayment(amount);
+    processPayment(amount);
   };
 
   const handleOtherSubmit = () => {
-    simulatePayment(otherAmount);
+    const amount = parseInt(otherAmount, 10);
+    if (!isNaN(amount) && amount > 0) {
+      processPayment(amount);
+    }
   };
 
   const renderContent = () => {
@@ -100,6 +116,12 @@ export default function PaybackModal({
     // Idle state content
     return (
       <Stack spacing={3}>
+        {paymentError && (
+          <Alert severity="error" onClose={() => setPaymentError(null)}>
+            {paymentError}
+          </Alert>
+        )}
+
         <Box>
           <Typography variant="subtitle2" color="text.secondary" gutterBottom>
             {t.payback.user}

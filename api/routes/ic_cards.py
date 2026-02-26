@@ -293,6 +293,13 @@ async def card_scan(scan: ScanRequest):
                 created_at=now
             )
             await new_purchase.insert(session=session)
+            
+            await ws_connection_manager.send_payload_to_tablet(WSSchema(
+                action="BUY",
+                student_id=str(student.student_id),
+                student_name=student.first_name,
+                debt_amount=student.account_balance
+            ))
 
             return {
                 "status": "success",

@@ -43,7 +43,7 @@ services:
   admin:
     build:
       context: ./admin
-      
+
       dockerfile: Dockerfile
     image: labshop-admin-prod:latest
     ports:
@@ -59,9 +59,17 @@ services:
       context: ./scanner/scanner_rust
       dockerfile: Dockerfile
     image: labshop-scanner-prod:latest
-    
+    privileged: true
+    network_mode: host
     environment:
-      API_URL: http://api:8000/ic_cards/scan
+      - API_URL=${API_URL:-http://localhost:8000/ic_cards/scan}
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - /sys/bus/usb:/sys/bus/usb:ro
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - /dev/snd:/dev/snd
+    restart: unless-stopped
     depends_on:
       - api
 

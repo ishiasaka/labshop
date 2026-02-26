@@ -514,6 +514,9 @@ class TestICCardScan:
         system_setting_findone_mock.return_value = SystemSetting(key="max_debt_limit", value="2000")  # Debt limit of 2000
 
         purchase_insert_mock = mocker.patch("models.Purchase.insert", autospec=True)
+        
+        ws_send_payback_mock = mocker.patch.object(ConnectionManager, "send_payload_to_tablet", autospec=True)
+
 
         res = await card_scan(req)
 
@@ -527,4 +530,9 @@ class TestICCardScan:
         assert base_purchase.shelf_id == "shelf1"
         assert base_purchase.price == 50
         assert base_purchase.status == PurchaseStatus.completed
+        
+        ws_send_payback_mock.assert_called_once()
+        ws_call_arg: WSSchema = ws_send_payback_mock.call_args[0][1]  # Get the positional arguments of the call
+        assert isinstance(ws_call_arg, WSSchema)  # First argument should be the student_id as a string
+        assert ws_call_arg.action == "BUY"
         

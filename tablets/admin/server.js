@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const FASTAPI_BASE = 'http://127.0.0.1:8000';
-const PORT = 3000;
+const PORT = +(process.env.PORT) || 3000;
 
 const app = express();
 

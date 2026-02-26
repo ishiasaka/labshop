@@ -162,6 +162,19 @@ export default function PaybackModal({
               ))}
             </Stack>
 
+            {userData.owedAmount > 0 ? (
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => handlePresetClick(userData.owedAmount)}
+                fullWidth
+              >
+                {t.payback.payFull}
+              </Button>
+            ) : (
+              <></>
+            )}
+
             <Button
               variant="contained"
               onClick={() => setShowOtherInput(true)}

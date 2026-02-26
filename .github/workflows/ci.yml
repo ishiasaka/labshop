@@ -11,16 +11,18 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libpcsclite-dev
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: i686-pc-windows-msvc, x86_64-pc-windows-msvc
           components: clippy, rustfmt
 
       - name: Cache cargo
@@ -40,14 +42,10 @@ jobs:
         working-directory: scanner/scanner_rust
         run: cargo fmt --check
 
-      - name: Clippy (32-bit)
+      - name: Clippy
         working-directory: scanner/scanner_rust
-        run: cargo clippy --target i686-pc-windows-msvc -- -D warnings
+        run: cargo clippy -- -D warnings
 
-      - name: Build (32-bit)
+      - name: Build
         working-directory: scanner/scanner_rust
-        run: cargo build --release --target i686-pc-windows-msvc --verbose
-
-      - name: Build (64-bit)
-        working-directory: scanner/scanner_rust
-        run: cargo build --release --target x86_64-pc-windows-msvc --verbose
+        run: cargo build --release --verbose

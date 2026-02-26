@@ -64,8 +64,8 @@ describe('StudentCarousel', () => {
         <StudentCarousel />
       </LanguageProvider>
     );
-    expect(screen.getAllByText('$50.00')[0]).toBeInTheDocument();
-    expect(screen.getAllByText('$120.50')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('¥50.00')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('¥120.50')[0]).toBeInTheDocument();
   });
 
   it('matches snapshot', () => {
@@ -180,8 +180,8 @@ describe('StudentCarousel', () => {
         <StudentCarousel />
       </LanguageProvider>
     );
-    // $0.00 is rendered; the component picks theme.palette.success.main for ≤ 0
-    const amounts = screen.getAllByText('$0.00');
+    // ¥0.00 is rendered; the component picks theme.palette.success.main for ≤ 0
+    const amounts = screen.getAllByText('¥0.00');
     expect(amounts.length).toBeGreaterThan(0);
   });
 });

@@ -189,7 +189,7 @@ export default function StudentCarousel() {
                             : theme.palette.success.main,
                       }}
                     >
-                      ${student.amountOwed.toFixed(2)}
+                      ¥{student.amountOwed.toFixed(2)}
                     </Typography>
                   </>
                 )}
@@ -270,7 +270,7 @@ export default function StudentCarousel() {
                             : theme.palette.success.main,
                       }}
                     >
-                      ${student.amountOwed.toFixed(2)}
+                      ¥{student.amountOwed.toFixed(2)}
                     </Typography>
                   </>
                 )}

@@ -4,7 +4,7 @@ services:
     privileged: true
     network_mode: host
     environment:
-      - API_URL=${API_URL:-http://localhost:8000/ic_cards/scan}
+      - API_URL=${API_URL:-git/scan}
       - PULSE_SERVER=unix:/run/user/1000/pulse/native
     volumes:
       - /dev/bus/usb:/dev/bus/usb

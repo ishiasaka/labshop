@@ -12,6 +12,11 @@ interface PaybackPayload {
   student_name: string;
   student_id: string;
   debt_amount: number;
+  action: "PAY_BACK";
+}
+
+interface BuyPayload {
+  action: "BUY";
 }
 
 function isPaybackPayload(data: unknown): data is PaybackPayload {
@@ -20,7 +25,16 @@ function isPaybackPayload(data: unknown): data is PaybackPayload {
     data !== null &&
     typeof (data as PaybackPayload).student_name === 'string' &&
     typeof (data as PaybackPayload).student_id === 'string' &&
-    typeof (data as PaybackPayload).debt_amount === 'number'
+    typeof (data as PaybackPayload).debt_amount === 'number' &&
+    (data as PaybackPayload).action === 'PAY_BACK'
+  );
+}
+
+function isBuyPayload(data: unknown): data is BuyPayload {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    (data as BuyPayload).action === 'BUY'
   );
 }
 
@@ -31,8 +45,10 @@ export default function Home() {
   const handleWsMessage = useCallback((data: unknown) => {
     if (isPaybackPayload(data)) {
       setPaybackData(data);
+    } else if (isBuyPayload(data)) {
+      mutate();
     }
-  }, []);
+  }, [mutate]);
 
   const { status } = useWebSocket({ onMessage: handleWsMessage });
 

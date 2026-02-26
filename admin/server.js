@@ -3,8 +3,8 @@ import session from 'express-session';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const FASTAPI_BASE = 'http://127.0.0.1:8000';
-const PORT = 3000;
+const FASTAPI_BASE = process.env.API_URL ?? 'http://127.0.0.1:8000';
+const PORT = +(process.env.PORT) || 3001;
 
 const app = express();
 
@@ -23,6 +23,7 @@ app.use(
       httpOnly: true,
       sameSite: 'lax',
       secure: false,
+      maxAge: 6 * 60 * 1000, // 6 minutes
     },
   })
 );

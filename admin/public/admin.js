@@ -13,6 +13,10 @@ let cardsPage = 1;
 let cardsPageSize = 10;
 let cardsCache = [];
 
+let shelvesPage = 1;
+let shelvesPageSize = 10;
+let shelvesCache = [];
+
 let activityPage = 1;
 let activityPageSize = 10;
 let activityCache = [];
@@ -86,7 +90,7 @@ async function readErrorMessage(res) {
 async function loadData() {
   const ok = await requireLogin();
   if (!ok) return;
-  await Promise.all([loadUsers(), loadActivity(), loadAllUsers(), loadCards()]);
+  await Promise.all([loadUsers(), loadActivity(), loadAllUsers(), loadCards(), loadShelves()]);
 }
 
 async function loadUsers() {
@@ -472,13 +476,14 @@ function renderCardsTable() {
           : '';
 
       const deactivateBtn = `<button class="btn" onclick="deactivateCard('${uid}')">Deactivate</button>`;
+      const activateBtn = `<button class="btn" onclick="activateCard('${uid}')">Activate</button>`;
       return `<tr>
         <td>${uid}</td>
         <td>${sid === '' ? '-' : sid}</td>
         <td>${status}</td>
         <td class="actions">
           ${unlinkBtn}
-          ${deactivateBtn}
+          ${c.status === "active" ? deactivateBtn : activateBtn}
         </td>
       </tr>`;
     })
@@ -508,6 +513,150 @@ function filterCards() {
 }
 window.filterCards = filterCards;
 
+async function loadShelves() {
+  try {
+    const res = await apiFetch('/shelves/');
+    if (!res.ok) {
+      console.error('loadShelves failed', res.status, await readErrorMessage(res));
+      return;
+    }
+
+    const data = await res.json();
+    shelvesCache = data.shelves || data || [];
+    renderShelvesTable();
+  } catch (e) {
+    console.error('loadShelves failed', e);
+  }
+}
+
+function renderShelvesTable() {
+  const tbody = document.querySelector('#shelfTable tbody');
+  if (!tbody) return;
+
+  const q = (document.getElementById('shelfSearch')?.value || '')
+    .toLowerCase()
+    .trim();
+
+  const filtered = q
+    ? (shelvesCache || []).filter((s) => {
+        const sid = String(s.shelf_id || '').toLowerCase();
+        const port = String(s.usb_port ?? '').toLowerCase();
+        return sid.includes(q) || port.includes(q);
+      })
+    : shelvesCache || [];
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / shelvesPageSize));
+  if (shelvesPage > totalPages) shelvesPage = totalPages;
+  if (shelvesPage < 1) shelvesPage = 1;
+
+  const start = (shelvesPage - 1) * shelvesPageSize;
+  const pageItems = filtered.slice(start, start + shelvesPageSize);
+
+  tbody.innerHTML = pageItems
+    .map(
+      (s) => `<tr>
+        <td>${s.shelf_id}</td>
+        <td>${s.usb_port}</td>
+        <td>¥${s.price}</td>
+        <td class="actions">
+          <button class="btn" onclick="selectShelf('${s.shelf_id}', ${s.usb_port || 0}, ${s.price || 0})">Select</button>
+          <button class="btn-danger" onclick="deleteShelf('${s.shelf_id}')">Delete</button>
+        </td>
+      </tr>`
+    )
+    .join('');
+
+  const prev = document.getElementById('shelvesPrev');
+  const next = document.getElementById('shelvesNext');
+  const info = document.getElementById('shelvesPageInfo');
+
+  if (prev) prev.disabled = shelvesPage <= 1;
+  if (next) next.disabled = shelvesPage >= totalPages;
+  if (info) info.innerText = `${shelvesPage} / ${totalPages}`;
+}
+
+function filterShelves() {
+  shelvesPage = 1;
+  renderShelvesTable();
+}
+
+async function createShelf() {
+  const ok = await requireLogin();
+  if (!ok) return;
+
+  const shelf_id = ($('shelf_id')?.value || '').trim();
+  const usb_port = parseInt(($('shelf_usb_port')?.value || '').trim(), 10);
+  const price = parseInt(($('shelf_price')?.value || '').trim(), 10);
+
+  if (!shelf_id || Number.isNaN(usb_port) || Number.isNaN(price)) {
+    alert('Please enter Shelf ID, USB Port, and Price.');
+    return;
+  }
+
+  try {
+    // Try creating first; backend may support upsert on PUT/PATCH otherwise
+    let res = await apiFetch('/shelves/', {
+      method: 'POST',
+      body: JSON.stringify({ shelf_id, usb_port, price }),
+    });
+
+    if (!res.ok && res.status === 409) {
+      // Conflict: try update
+      res = await apiFetch(`/shelves/${encodeURIComponent(shelf_id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ usb_port, price }),
+      });
+    }
+
+    if (res.ok) {
+      alert('Shelf saved!');
+      $('shelf_id').value = '';
+      $('shelf_usb_port').value = '';
+      $('shelf_price').value = '';
+      await loadShelves();
+      return;
+    }
+
+    const msg = await readErrorMessage(res);
+    alert(`Error (${res.status}): ${msg}`);
+  } catch (e) {
+    alert('Network Error: ' + (e?.message || String(e)));
+  }
+}
+
+function shelvesNextPage() {
+  shelvesPage++;
+  renderShelvesTable();
+}
+
+function shelvesPrevPage() {
+  shelvesPage--;
+  renderShelvesTable();
+}
+
+function selectShelf(shelfId, usbPort, price) {
+  const elId = $('shelf_id');
+  const elPort = $('shelf_usb_port');
+  const elPrice = $('shelf_price');
+  if (elId) elId.value = shelfId;
+  if (elPort) elPort.value = usbPort;
+  if (elPrice) elPrice.value = price;
+}
+
+async function deleteShelf(shelfId) {
+  if (!confirm('Delete shelf ' + shelfId + '?')) return;
+  try {
+    const res = await apiFetch(`/shelves/${encodeURIComponent(shelfId)}`, { method: 'DELETE' });
+    if (!res.ok) {
+      alert(`Error (${res.status}): ` + (await readErrorMessage(res)));
+      return;
+    }
+    await loadShelves();
+  } catch (e) {
+    alert('Network Error: ' + (e?.message || String(e)));
+  }
+}
+
 async function unlinkCard(uid) {
   const res = await apiFetch(`/ic_cards/${uid}/unlink`, { method: 'POST' });
   if (!res.ok) {
@@ -518,7 +667,16 @@ async function unlinkCard(uid) {
 }
 
 async function deactivateCard(uid) {
-  const res = await apiFetch(`/ic_cards/${uid}/deactivate`, { method: 'POST' });
+  const res = await apiFetch(`/ic_cards/${uid}/deactivate`, { method: 'PATCH' });
+  if (!res.ok) {
+    alert(`Error (${res.status}): ` + (await readErrorMessage(res)));
+    return;
+  }
+  await loadCards();
+}
+
+async function activateCard(uid) {
+  const res = await apiFetch(`/ic_cards/${uid}/activate`, { method: 'PATCH' });
   if (!res.ok) {
     alert(`Error (${res.status}): ` + (await readErrorMessage(res)));
     return;
@@ -621,6 +779,12 @@ window.debtPrevPage = debtPrevPage;
 
 window.cardsNextPage = cardsNextPage;
 window.cardsPrevPage = cardsPrevPage;
+window.filterShelves = filterShelves;
+window.createShelf = createShelf;
+window.shelvesNextPage = shelvesNextPage;
+window.shelvesPrevPage = shelvesPrevPage;
+window.selectShelf = selectShelf;
+window.deleteShelf = deleteShelf;
 
 window.addEventListener('load', () => {
   loadData();

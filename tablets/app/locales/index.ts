@@ -25,6 +25,7 @@ export const translations = {
       processing: 'Payment processing...',
       success: 'Payment Successful!',
       error: 'Payment failed. Please try again.',
+      payFull: 'Pay Full Amount',
     },
   },
   ja: {
@@ -53,6 +54,7 @@ export const translations = {
       processing: '支払い処理中...',
       success: '支払い完了！',
       error: '支払いに失敗しました。もう一度お試しください。',
+      payFull: '全額支払う',
     },
   },
 };

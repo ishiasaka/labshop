@@ -11,9 +11,9 @@ from services.auth import get_current_admin, TokenData
 
 router = APIRouter(prefix="/ic_cards")
 
-@router.get('/', description="Get all active IC cards")
+@router.get('/', description="Get all IC cards")
 async def get_active_ic_cards():
-    cards = await ICCard.find(ICCard.status == ICCardStatus.active).to_list()
+    cards = await ICCard.find().to_list()
     return cards
 
 @router.get("/captured", description="Get latest captured unlinked IC card for admin registration")
@@ -109,8 +109,8 @@ async def register_card(uid: str, data: CardRegistrationRequest, admin: TokenDat
 
     return {"message": f"Card {uid} linked to student {data.student_id} by {admin.full_name}"}
 
-@router.post("/{uid}/deactivate", description="Deactivate an IC card")
-async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin)):
+@router.patch("/{uid}/deactivate", description="Deactivate an IC card")
+async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin)) -> ICCard:
     client = User.get_pymongo_collection().database.client
     now = datetime.now(timezone.utc)
     
@@ -136,7 +136,30 @@ async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin
                 created_at=now
             ).insert(session=session)
 
-    return {"message": f"Card {uid} successfully deactivated and logged."}
+    return card
+
+@router.patch("/{uid}/activate", description="Activate an IC card")
+async def activate_card(uid: str, admin: TokenData = Depends(get_current_admin)) -> ICCard:
+    
+    card = await ICCard.find_one(ICCard.uid == uid)
+    if not card:
+        raise HTTPException(404, "Card not found")
+    if card.status == ICCardStatus.active:
+        raise HTTPException(400, "Card is already active")
+    
+    card.status = ICCardStatus.active
+    await card.save()
+    
+    await AdminLog(
+                admin_id=PydanticObjectId(admin.id),
+                admin_name=admin.full_name,
+                action=f"Activated card {uid}",
+                target=f"Was linked to Student: {card.student_id}",
+                targeted_student_id=card.student_id,
+                created_at=datetime.now(timezone.utc)
+    ).insert()
+
+    return card
 
 @router.post("/{uid}/unlink", description="Unlink an IC card from its student (keep card active)")
 async def unlink_card(uid: str, admin: TokenData = Depends(get_current_admin)):
@@ -270,6 +293,13 @@ async def card_scan(scan: ScanRequest):
                 created_at=now
             )
             await new_purchase.insert(session=session)
+            
+            await ws_connection_manager.send_payload_to_tablet(WSSchema(
+                action="BUY",
+                student_id=str(student.student_id),
+                student_name=student.first_name,
+                debt_amount=student.account_balance
+            ))
 
             return {
                 "status": "success",

@@ -302,7 +302,7 @@ async def card_scan(scan: ScanRequest):
                     debt_amount=student.account_balance
                 ))
             except ConnectionError:
-                pass
+                return {"status": "error", "message": "Purchase recorded but no tablet connected"}
 
             return {
                 "status": "success",

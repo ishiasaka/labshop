@@ -122,10 +122,10 @@ export default function StudentCarousel() {
           ) : (
             <>
               <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
-                {t('owedAmount')}
+                {student.amountOwed < 0 ? t('loanedAmount') : t('owedAmount')}
               </Typography>
               <Typography variant="h3" sx={{ fontWeight: 700, color: student.amountOwed > 0 ? theme.palette.error.main : theme.palette.success.main }}>
-                {student.amountOwed < 0 ? '+' : ''}¥{Math.abs(student.amountOwed)}
+                ¥{Math.abs(student.amountOwed)}
               </Typography>
             </>
           )}

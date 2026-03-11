@@ -1,3 +1,3 @@
 #! /bin/bash
-export SECRET_KEY="4bbbedda03313180226144d9882742f4356637813fb45ee8e056760555608da9"
+export SECRET_KEY=f807ea8d699d497b70394ecdb5daee420d953ab072aea113f9411b923fa319ad
 docker compose -f docker-compose.prod.yaml up --build -d

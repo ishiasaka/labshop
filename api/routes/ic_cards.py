@@ -294,12 +294,15 @@ async def card_scan(scan: ScanRequest):
             )
             await new_purchase.insert(session=session)
             
-            await ws_connection_manager.send_payload_to_tablet(WSSchema(
-                action="BUY",
-                student_id=str(student.student_id),
-                student_name=student.first_name,
-                debt_amount=student.account_balance
-            ))
+            try:
+                await ws_connection_manager.send_payload_to_tablet(WSSchema(
+                    action="BUY",
+                    student_id=str(student.student_id),
+                    student_name=student.first_name,
+                    debt_amount=student.account_balance
+                ))
+            except ConnectionError:
+                return {"status": "error", "message": "Purchase recorded but no tablet connected"}
 
             return {
                 "status": "success",

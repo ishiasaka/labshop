@@ -5,6 +5,7 @@ export const translations = {
     studentIdPlaceholder: 'Enter Student ID',
     submit: 'Submit',
     owedAmount: 'Owed Amount',
+    loanedAmount: 'Loaned Amount',
     noData: 'No Data',
     users: {
       fetchError: 'Failed to load students. Please try again.',
@@ -34,6 +35,7 @@ export const translations = {
     studentIdPlaceholder: '学生証番号を入力',
     submit: '送信',
     owedAmount: '未払い金額',
+    loanedAmount: '貸出金額',
     noData: 'データなし',
     users: {
       fetchError: '生徒の読み込みに失敗しました。もう一度お試しください。',

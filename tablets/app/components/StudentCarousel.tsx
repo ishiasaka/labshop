@@ -61,7 +61,7 @@ export default function StudentCarousel() {
 
     rafId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafId);
-  }, []);
+  }, [students.length]);
 
   const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     drag.current = { isDown: true, startX: e.pageX, scrollLeft: containerRef.current?.scrollLeft ?? 0 };

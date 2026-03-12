@@ -140,3 +140,13 @@ class ShelvesOut(BaseModel):
 
 class SystemSettingsOut(BaseModel):
     settings: List[SystemSettingOut]
+    
+class ICCardRegisterTablet(BaseModel):
+    uid: str
+    student_id: int
+    first_name: str
+    last_name: str
+    
+class ICCardRegisterTabletOut(BaseModel):
+    uid: str
+    student_id: int

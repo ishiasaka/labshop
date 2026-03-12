@@ -41,10 +41,6 @@ class User(Document):
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
 
-    async def save(self, *args, **kwargs):
-        self.updated_at = utcnow()
-        return await super().save(*args, **kwargs)
-
     class Settings:
         name = "user"
 

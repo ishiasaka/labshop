@@ -150,3 +150,7 @@ class ICCardRegisterTablet(BaseModel):
 class ICCardRegisterTabletOut(BaseModel):
     uid: str
     student_id: int
+    
+class AdminChangePassword(BaseModel):
+    current_password: str
+    new_password: str

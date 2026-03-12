@@ -29,6 +29,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 import { AdminAuthProvider, useAdminAuth } from './_context/AdminAuthContext';
 import AdminGuard from './_components/AdminGuard';
+import { useRouter } from 'next/navigation';
 
 const DRAWER_WIDTH = 240;
 
@@ -48,7 +49,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === '/admin/login';
   const toggleDrawer = () => setDrawerOpen((prev) => !prev);
 
+  const router = useRouter();
+
   if (isLoginPage) return <>{children}</>;
+
+  const logoutHandler = async () => {
+    await logout();
+    // redirect to login page after logout
+    router.push('/admin/login');
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -75,7 +84,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             </Box>
           )}
           <Tooltip title="Logout">
-            <IconButton color="inherit" onClick={logout} sx={{ ml: 1 }}>
+            <IconButton color="inherit" onClick={logoutHandler} sx={{ ml: 1 }}>
               <LogoutIcon />
             </IconButton>
           </Tooltip>
@@ -111,7 +120,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         <Divider />
         <List>
           <ListItem disablePadding>
-            <ListItemButton onClick={logout}>
+            <ListItemButton onClick={logoutHandler}>
               <ListItemIcon><LogoutIcon /></ListItemIcon>
               <ListItemText primary="Logout" />
             </ListItemButton>

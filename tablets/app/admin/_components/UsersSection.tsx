@@ -32,7 +32,7 @@ interface UsersResponse {
 
 export default function UsersSection() {
   const { data, error, isLoading, mutate } = useSWR<UsersResponse>(
-    '/users/',
+    '/users?include_inactive=true',
     adminSwrFetcher
   );
 

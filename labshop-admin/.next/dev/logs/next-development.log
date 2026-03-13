@@ -1,0 +1,15 @@
+[00:02:37.212] Server  ERROR   Error: Cannot find module '../../../build/analysis/get-page-static-info'
+Require stack:
+- /Users/ishiasaka/Documents/Code/labshop/labshop-admin/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.58.2_babel-plugin-macros@3.1.0_babel-_fff5aa48fd677f5d537b2a928cbe7673/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/ishiasaka/Documents/Code/labshop/labshop-admin/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.58.2_babel-plugin-macros@3.1.0_babel-_fff5aa48fd677f5d537b2a928cbe7673/node_modules/next/dist/server/lib/router-server.js
+- /Users/ishiasaka/Documents/Code/labshop/labshop-admin/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.58.2_babel-plugin-macros@3.1.0_babel-_fff5aa48fd677f5d537b2a928cbe7673/node_modules/next/dist/server/lib/start-server.js
+[00:02:37.216] Server  ERROR   ⨯ "unhandledRejection:" Error: Cannot find module '../../../build/analysis/get-page-static-info'
+Require stack:
+- /Users/ishiasaka/Documents/Code/labshop/labshop-admin/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.58.2_babel-plugin-macros@3.1.0_babel-_fff5aa48fd677f5d537b2a928cbe7673/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/ishiasaka/Documents/Code/labshop/labshop-admin/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.58.2_babel-plugin-macros@3.1.0_babel-_fff5aa48fd677f5d537b2a928cbe7673/node_modules/next/dist/server/lib/router-server.js
+- /Users/ishiasaka/Documents/Code/labshop/labshop-admin/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.58.2_babel-plugin-macros@3.1.0_babel-_fff5aa48fd677f5d537b2a928cbe7673/node_modules/next/dist/server/lib/start-server.js
+[00:02:37.219] Server  ERROR   ⨯ "unhandledRejection: " Error: Cannot find module '../../../build/analysis/get-page-static-info'
+Require stack:
+- /Users/ishiasaka/Documents/Code/labshop/labshop-admin/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.58.2_babel-plugin-macros@3.1.0_babel-_fff5aa48fd677f5d537b2a928cbe7673/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/ishiasaka/Documents/Code/labshop/labshop-admin/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.58.2_babel-plugin-macros@3.1.0_babel-_fff5aa48fd677f5d537b2a928cbe7673/node_modules/next/dist/server/lib/router-server.js
+- /Users/ishiasaka/Documents/Code/labshop/labshop-admin/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.58.2_babel-plugin-macros@3.1.0_babel-_fff5aa48fd677f5d537b2a928cbe7673/node_modules/next/dist/server/lib/start-server.js

@@ -77,9 +77,13 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     login_data = await admin_login(AdminLogin(username=form_data.username, password=form_data.password))
     return Token(access_token=login_data["token"], token_type="bearer")
 
-@router.get("/me", description="Get current admin info")
-async def get_cu    rrent_admin_info(admin: TokenData = Depends(auth.get_current_admin)) -> TokenData:
-    return admin
+@router.get("/me", description="Get current admin details")
+async def get_current_admin(admin: TokenData = Depends(auth.get_current_admin)) -> Admin:
+    admin_record = await Admin.get(PydanticObjectId(admin.id))
+    if not admin_record:
+        raise HTTPException(status_code=404, detail="Admin not found")
+
+    return admin_record
 
 @router.patch("/me/password", description="Change current admin password", status_code=204)
 async def change_password(

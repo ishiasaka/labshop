@@ -10,6 +10,7 @@ class WSSchema(BaseModel):
     student_name: Optional[str] = None
     debt_amount: Optional[int] = None
     price: Optional[int] = None
+    card_uid: Optional[str] = None
 
 class ConnectionManager:
     __tablet_connection: WebSocket | None

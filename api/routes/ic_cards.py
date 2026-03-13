@@ -1,6 +1,6 @@
 from beanie import PydanticObjectId
 from fastapi import APIRouter, HTTPException, Depends
-from schema import ICCardCreate, UserStatus
+from schema import ICCardCreate, ICCardRegisterTablet, ICCardRegisterTabletOut, UserStatus
 from datetime import datetime, timezone
 from models import AdminLog, ICCard, Purchase, User, Shelf, SystemSetting
 from services.ws import WSSchema, ws_connection_manager
@@ -48,6 +48,29 @@ async def create_ic_card(card: ICCardCreate):
     )
     await ic.insert()
     return ic
+
+@router.post("/tablets/register", description="Register a new IC card from tablet")
+async def register_ic_card_from_tablet(data: ICCardRegisterTablet) -> ICCardRegisterTabletOut:
+    
+    user = await User(
+        student_id=data.student_id,
+        first_name=data.first_name,
+        last_name=data.last_name,
+        account_balance=0,
+        status=UserStatus.active,
+    ).save()
+    
+    card = await ICCard(
+        uid=data.uid.strip().lower(),
+        student_id=data.student_id,
+        status=ICCardStatus.active
+    ).save()
+    
+    return ICCardRegisterTabletOut(
+        uid=card.uid,
+        student_id=user.student_id,
+    )
+    
 
 @router.post("/{uid}/register", description="Register an IC card to a student")
 async def register_card(uid: str, data: CardRegistrationRequest, admin: TokenData = Depends(get_current_admin)):
@@ -210,16 +233,15 @@ async def card_scan(scan: ScanRequest):
                 await card.set({ICCard.updated_at: now})
                 print(">>> Updated existing unlinked card.")
             else:
-                new_card = ICCard(
-                    uid=uid.strip().lower(),
-                    student_id=None, 
-                    status=ICCardStatus.active,
-                    created_at=now,
-                    updated_at=now
+                await ws_connection_manager.send_payload_to_tablet(
+                    WSSchema(
+                        action="NEW_CARD",
+                        card_uid=uid   
+                    )
                 )
-                await new_card.insert()
-                print(">>> Successfully inserted NEW card to DB.")
-            return {"status": "new_card", "message": "Card captured. Register in Admin."}
+                
+                print(">>> Sended new card notification to tablet.")
+            return {"status": "new_card", "message": "Card captured. Register in Tablets."}
         if card.status != ICCardStatus.active:
             return {"status": "error", "message": "Card is not active"}
 

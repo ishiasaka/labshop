@@ -1,13 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from models import Admin
-from schema import AdminCreate, AdminRole, AdminLogin
+from schema import AdminCreate, AdminRole, AdminLogin, AdminChangePassword
 from typing import Annotated
 from services.auth import Token, TokenData
 import services.auth as auth
 import bcrypt
 import jwt
 import os
+from beanie import PydanticObjectId
 
 router = APIRouter(prefix="/admin")
 
@@ -76,6 +77,28 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     login_data = await admin_login(AdminLogin(username=form_data.username, password=form_data.password))
     return Token(access_token=login_data["token"], token_type="bearer")
 
-@router.get("/me", description="Get current admin info")
-async def get_current_admin_info(admin: TokenData = Depends(auth.get_current_admin)) -> TokenData:
-    return admin
+@router.get("/me", description="Get current admin details")
+async def get_current_admin(admin: TokenData = Depends(auth.get_current_admin)) -> Admin:
+    admin_record = await Admin.get(PydanticObjectId(admin.id))
+    if not admin_record:
+        raise HTTPException(status_code=404, detail="Admin not found")
+
+    return admin_record
+
+@router.patch("/me/password", description="Change current admin password", status_code=204)
+async def change_password(
+    payload: AdminChangePassword,
+    admin: TokenData = Depends(auth.get_current_admin)
+):
+    admin_record = await Admin.get(PydanticObjectId(admin.id))
+    if not admin_record:
+        raise HTTPException(status_code=404, detail="Admin not found")
+
+    if not bcrypt.checkpw(payload.current_password.encode("utf-8"), admin_record.password_hash.encode("utf-8")):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+    new_hashed_password = bcrypt.hashpw(payload.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    admin_record.password_hash = new_hashed_password
+    await admin_record.save()
+
+    return 

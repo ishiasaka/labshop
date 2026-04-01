@@ -11,8 +11,12 @@ router = APIRouter(prefix="/users")
 
 
 @router.get("/", response_model=UsersOut)
-async def list_users():
-    return {"users": await User.find().to_list()}
+async def list_users(include_inactive: bool = False):
+    if include_inactive:
+        users = await User.find().to_list()
+    else:
+        users = await User.find(User.status == UserStatus.active).to_list()
+    return {"users": users}
 
 @router.get("/{student_id}", response_model=UserOut)
 async def get_user(student_id: int):

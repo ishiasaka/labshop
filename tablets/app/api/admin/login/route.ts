@@ -7,7 +7,10 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ detail: 'Invalid request body' }, { status: 400 });
+    return NextResponse.json(
+      { detail: 'Invalid request body' },
+      { status: 400 }
+    );
   }
 
   let r: Response;
@@ -24,7 +27,9 @@ export async function POST(req: NextRequest) {
   const data = await r.json().catch(() => null);
 
   if (!r.ok) {
-    return NextResponse.json(data ?? { detail: 'Invalid credentials' }, { status: r.status });
+    return NextResponse.json(data ?? { detail: 'Invalid credentials' }, {
+      status: r.status,
+    });
   }
 
   const response = NextResponse.json({

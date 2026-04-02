@@ -136,7 +136,8 @@ export default function PaybackModal({
             {t.payback.totalOwed}
           </Typography>
           <Typography variant="h4" fontWeight="bold">
-            {userData.owedAmount < 0 ? '+' : ''}¥{Math.abs(userData.owedAmount).toLocaleString()}
+            {userData.owedAmount < 0 ? '+' : ''}¥
+            {Math.abs(userData.owedAmount).toLocaleString()}
           </Typography>
         </Box>
 

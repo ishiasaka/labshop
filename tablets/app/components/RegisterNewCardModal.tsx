@@ -121,7 +121,11 @@ const RegisterNewCardModal: React.FC<RegisterNewCardModalProps> = ({
     if (registerStatus === 'processing') {
       return (
         <Stack spacing={3} alignItems="center" py={4}>
-          <CircularProgress size={60} thickness={4} sx={{ color: 'primary.main' }} />
+          <CircularProgress
+            size={60}
+            thickness={4}
+            sx={{ color: 'primary.main' }}
+          />
           <Typography variant="h6" fontWeight={500}>
             {t.registerNewCard.processing}
           </Typography>

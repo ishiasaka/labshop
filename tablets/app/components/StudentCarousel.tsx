@@ -64,20 +64,39 @@ export default function StudentCarousel() {
   }, [students.length]);
 
   const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    drag.current = { isDown: true, startX: e.pageX, scrollLeft: containerRef.current?.scrollLeft ?? 0 };
+    drag.current = {
+      isDown: true,
+      startX: e.pageX,
+      scrollLeft: containerRef.current?.scrollLeft ?? 0,
+    };
   };
-  const onMouseUp = () => { drag.current.isDown = false; };
+  const onMouseUp = () => {
+    drag.current.isDown = false;
+  };
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!drag.current.isDown) return;
     e.preventDefault();
     if (containerRef.current) {
-      containerRef.current.scrollLeft = drag.current.scrollLeft - (e.pageX - drag.current.startX);
+      containerRef.current.scrollLeft =
+        drag.current.scrollLeft - (e.pageX - drag.current.startX);
     }
   };
 
   if (loading) {
     return (
-      <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.background.default }}>
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor:
+            theme.palette.mode === 'light'
+              ? theme.palette.grey[100]
+              : theme.palette.background.default,
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -85,7 +104,19 @@ export default function StudentCarousel() {
 
   if (error) {
     return (
-      <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.background.default }}>
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor:
+            theme.palette.mode === 'light'
+              ? theme.palette.grey[100]
+              : theme.palette.background.default,
+        }}
+      >
         <Typography color="error">{error}</Typography>
       </Box>
     );
@@ -111,20 +142,48 @@ export default function StudentCarousel() {
           '&:hover': { transform: 'scale(1.05)' },
         }}
       >
-        <Typography variant="h4" component="div" sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'center' }}>
+        <Typography
+          variant="h4"
+          component="div"
+          sx={{
+            fontWeight: 600,
+            color: theme.palette.text.primary,
+            textAlign: 'center',
+          }}
+        >
           {student.name}
         </Typography>
         <Box sx={{ textAlign: 'center' }}>
           {student.amountOwed === -1 ? (
-            <Typography variant="h4" sx={{ fontWeight: 700, color: theme.palette.text.disabled, letterSpacing: 2 }}>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                color: theme.palette.text.disabled,
+                letterSpacing: 2,
+              }}
+            >
               {t('noData')}
             </Typography>
           ) : (
             <>
-              <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
+              <Typography
+                variant="h6"
+                color="text.secondary"
+                sx={{ mb: 1, fontWeight: 500 }}
+              >
                 {student.amountOwed < 0 ? t('loanedAmount') : t('owedAmount')}
               </Typography>
-              <Typography variant="h3" sx={{ fontWeight: 700, color: student.amountOwed > 0 ? theme.palette.error.main : theme.palette.success.main }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  fontWeight: 700,
+                  color:
+                    student.amountOwed > 0
+                      ? theme.palette.error.main
+                      : theme.palette.success.main,
+                }}
+              >
                 ¥{Math.abs(student.amountOwed)}
               </Typography>
             </>
@@ -151,7 +210,10 @@ export default function StudentCarousel() {
         '&:active': { cursor: 'grabbing' },
         '&::-webkit-scrollbar': { display: 'none' },
         scrollbarWidth: 'none',
-        backgroundColor: theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.background.default,
+        backgroundColor:
+          theme.palette.mode === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.background.default,
       }}
     >
       <Box sx={{ display: 'flex', gap: 4, px: 2, flexShrink: 0 }}>

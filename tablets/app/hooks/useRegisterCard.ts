@@ -4,18 +4,16 @@ import useSWRMutation from 'swr/mutation';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export interface CardCreate {
-    uid: string;
-    student_id: string;
-    first_name: string;
-    last_name: string;
+  uid: string;
+  student_id: string;
+  first_name: string;
+  last_name: string;
 }
 
 export interface CardOut {
-    uid: string;
-    student_id: string;
+  uid: string;
+  student_id: string;
 }
-
-
 
 export async function postRegisterCard(
   url: string,

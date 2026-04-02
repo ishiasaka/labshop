@@ -14,16 +14,16 @@ interface PaybackPayload {
   student_name: string;
   student_id: string;
   debt_amount: number;
-  action: "PAY_BACK";
+  action: 'PAY_BACK';
 }
 
 interface BuyPayload {
-  action: "BUY";
+  action: 'BUY';
 }
 
 interface NewCardPayload {
-  action: "NEW_CARD";
-  card_uid: string
+  action: 'NEW_CARD';
+  card_uid: string;
 }
 
 function isPaybackPayload(data: unknown): data is PaybackPayload {
@@ -54,21 +54,23 @@ function isNewCardPayload(data: unknown): data is NewCardPayload {
   );
 }
 
-
 export default function Home() {
   const [paybackData, setPaybackData] = useState<PaybackPayload | null>(null);
   const [newCardData, setNewCardData] = useState<NewCardPayload | null>(null);
   const { mutate } = useUsers();
 
-  const handleWsMessage = useCallback((data: unknown) => {
-    if (isPaybackPayload(data)) {
-      setPaybackData(data);
-    } else if (isBuyPayload(data)) {
-      mutate();
-    } else if (isNewCardPayload(data)) {
-      setNewCardData(data);
-    }
-  }, [mutate]);
+  const handleWsMessage = useCallback(
+    (data: unknown) => {
+      if (isPaybackPayload(data)) {
+        setPaybackData(data);
+      } else if (isBuyPayload(data)) {
+        mutate();
+      } else if (isNewCardPayload(data)) {
+        setNewCardData(data);
+      }
+    },
+    [mutate]
+  );
 
   const { status } = useWebSocket({ onMessage: handleWsMessage });
 
@@ -112,7 +114,7 @@ export default function Home() {
         />
       )}
       {newCardData && (
-        <RegisterNewCardModal 
+        <RegisterNewCardModal
           open={!!newCardData}
           onClose={() => setNewCardData(null)}
           onSuccess={() => mutate()}

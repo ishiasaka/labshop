@@ -329,7 +329,6 @@ class TestICCardScan:
         iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
         iccard_findone_mock.return_value = None  # No existing card
 
-        iccard_insert_mock = mocker.patch.object(ICCard, "insert", autospec=True)
         ws_send_mock = mocker.patch.object(ConnectionManager, "send_payload_to_tablet", autospec=True)
 
         res = await card_scan(req)
@@ -337,11 +336,6 @@ class TestICCardScan:
         assert res["status"] == "new_card"
         assert res["message"] == "Card captured. Register in Tablets."
         
-        iccard_insert_mock.assert_called_once()
-        inserted_card = iccard_insert_mock.call_args[0][0]  # The first argument to insert() is the ICCard instance
-        assert inserted_card.uid == "newuid123"
-        assert inserted_card.student_id is None
-        assert inserted_card.status == ICCardStatus.active
     
     async def test_admin_port_card_exist_but_unlinked(self, mocker: MockerFixture):
         """

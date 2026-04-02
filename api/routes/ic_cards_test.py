@@ -330,11 +330,12 @@ class TestICCardScan:
         iccard_findone_mock.return_value = None  # No existing card
 
         iccard_insert_mock = mocker.patch.object(ICCard, "insert", autospec=True)
+        ws_send_mock = mocker.patch.object(ConnectionManager, "send_payload_to_tablet", autospec=True)
 
         res = await card_scan(req)
 
         assert res["status"] == "new_card"
-        assert res["message"] == "Card captured. Register in Admin."
+        assert res["message"] == "Card captured. Register in Tablets."
         
         iccard_insert_mock.assert_called_once()
         inserted_card = iccard_insert_mock.call_args[0][0]  # The first argument to insert() is the ICCard instance
@@ -359,11 +360,12 @@ class TestICCardScan:
         iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
         iccard_findone_mock.return_value = existing_card  # Existing unlinked card
 
+        ws_send_mock = mocker.patch.object(ConnectionManager, "send_payload_to_tablet", autospec=True)
 
         res = await card_scan(req)
 
         assert res["status"] == "new_card"
-        assert res["message"] == "Card captured. Register in Admin."
+        assert res["message"] == "Card captured. Register in Tablets."
         
         existing_card.set.assert_called_once()
     

@@ -329,18 +329,13 @@ class TestICCardScan:
         iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
         iccard_findone_mock.return_value = None  # No existing card
 
-        iccard_insert_mock = mocker.patch.object(ICCard, "insert", autospec=True)
+        ws_send_mock = mocker.patch.object(ConnectionManager, "send_payload_to_tablet", autospec=True)
 
         res = await card_scan(req)
 
         assert res["status"] == "new_card"
-        assert res["message"] == "Card captured. Register in Admin."
+        assert res["message"] == "Card captured. Register in Tablets."
         
-        iccard_insert_mock.assert_called_once()
-        inserted_card = iccard_insert_mock.call_args[0][0]  # The first argument to insert() is the ICCard instance
-        assert inserted_card.uid == "newuid123"
-        assert inserted_card.student_id is None
-        assert inserted_card.status == ICCardStatus.active
     
     async def test_admin_port_card_exist_but_unlinked(self, mocker: MockerFixture):
         """
@@ -359,11 +354,12 @@ class TestICCardScan:
         iccard_findone_mock = mocker.patch.object(ICCard, "find_one", new_callable=mocker.AsyncMock)
         iccard_findone_mock.return_value = existing_card  # Existing unlinked card
 
+        ws_send_mock = mocker.patch.object(ConnectionManager, "send_payload_to_tablet", autospec=True)
 
         res = await card_scan(req)
 
         assert res["status"] == "new_card"
-        assert res["message"] == "Card captured. Register in Admin."
+        assert res["message"] == "Card captured. Register in Tablets."
         
         existing_card.set.assert_called_once()
     
@@ -514,6 +510,9 @@ class TestICCardScan:
         system_setting_findone_mock.return_value = SystemSetting(key="max_debt_limit", value="2000")  # Debt limit of 2000
 
         purchase_insert_mock = mocker.patch("models.Purchase.insert", autospec=True)
+        
+        ws_send_payback_mock = mocker.patch.object(ConnectionManager, "send_payload_to_tablet", autospec=True)
+
 
         res = await card_scan(req)
 
@@ -527,4 +526,9 @@ class TestICCardScan:
         assert base_purchase.shelf_id == "shelf1"
         assert base_purchase.price == 50
         assert base_purchase.status == PurchaseStatus.completed
+        
+        ws_send_payback_mock.assert_called_once()
+        ws_call_arg: WSSchema = ws_send_payback_mock.call_args[0][1]  # Get the positional arguments of the call
+        assert isinstance(ws_call_arg, WSSchema)  # First argument should be the student_id as a string
+        assert ws_call_arg.action == "BUY"
         

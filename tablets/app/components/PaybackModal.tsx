@@ -136,7 +136,8 @@ export default function PaybackModal({
             {t.payback.totalOwed}
           </Typography>
           <Typography variant="h4" fontWeight="bold">
-            ¥{userData.owedAmount.toLocaleString()}
+            {userData.owedAmount < 0 ? '+' : ''}¥
+            {Math.abs(userData.owedAmount).toLocaleString()}
           </Typography>
         </Box>
 
@@ -162,6 +163,19 @@ export default function PaybackModal({
               ))}
             </Stack>
 
+            {userData.owedAmount > 0 ? (
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => handlePresetClick(userData.owedAmount)}
+                fullWidth
+              >
+                {t.payback.payFull}
+              </Button>
+            ) : (
+              <></>
+            )}
+
             <Button
               variant="contained"
               onClick={() => setShowOtherInput(true)}
@@ -179,6 +193,12 @@ export default function PaybackModal({
               <TextField
                 placeholder={t.payback.enterAmount}
                 type="number"
+                slotProps={{
+                  htmlInput: {
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*',
+                  },
+                }}
                 value={otherAmount}
                 onChange={(e) => setOtherAmount(e.target.value)}
                 autoFocus

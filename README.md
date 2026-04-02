@@ -1,9 +1,20 @@
 # labshop
+
 ## Author
-- Kanaji Rintaro
+- Rintaro Kanaji
 - Sila Sonpee (Ishikawa)
 - Suzuka Yoshimoto
-- Joseph Ayobami
+- Ayobami Joseph
 - Sadio Bah
 
-This project is the part of Project-based Learning (PBL) at NAIST.
+## Start production
+1. Assign the secret key in start-prod.sh (example in start-prod.sh, copy and rename it)
+2. Run this command
+```bash
+$ ./start-prod.sh
+```
+
+## Stop
+```bash
+$ docker compose -f docker-compose.prod.yaml down
+```

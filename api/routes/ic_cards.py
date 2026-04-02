@@ -1,6 +1,6 @@
 from beanie import PydanticObjectId
 from fastapi import APIRouter, HTTPException, Depends
-from schema import ICCardCreate, UserStatus
+from schema import ICCardCreate, ICCardRegisterTablet, ICCardRegisterTabletOut, UserStatus
 from datetime import datetime, timezone
 from models import AdminLog, ICCard, Purchase, User, Shelf, SystemSetting
 from services.ws import WSSchema, ws_connection_manager
@@ -11,9 +11,9 @@ from services.auth import get_current_admin, TokenData
 
 router = APIRouter(prefix="/ic_cards")
 
-@router.get('/', description="Get all active IC cards")
+@router.get('/', description="Get all IC cards")
 async def get_active_ic_cards():
-    cards = await ICCard.find(ICCard.status == ICCardStatus.active).to_list()
+    cards = await ICCard.find().to_list()
     return cards
 
 @router.get("/captured", description="Get latest captured unlinked IC card for admin registration")
@@ -48,6 +48,29 @@ async def create_ic_card(card: ICCardCreate):
     )
     await ic.insert()
     return ic
+
+@router.post("/tablets/register", description="Register a new IC card from tablet")
+async def register_ic_card_from_tablet(data: ICCardRegisterTablet) -> ICCardRegisterTabletOut:
+    
+    user = await User(
+        student_id=data.student_id,
+        first_name=data.first_name,
+        last_name=data.last_name,
+        account_balance=0,
+        status=UserStatus.active,
+    ).save()
+    
+    card = await ICCard(
+        uid=data.uid.strip().lower(),
+        student_id=data.student_id,
+        status=ICCardStatus.active
+    ).save()
+    
+    return ICCardRegisterTabletOut(
+        uid=card.uid,
+        student_id=user.student_id,
+    )
+    
 
 @router.post("/{uid}/register", description="Register an IC card to a student")
 async def register_card(uid: str, data: CardRegistrationRequest, admin: TokenData = Depends(get_current_admin)):
@@ -109,8 +132,8 @@ async def register_card(uid: str, data: CardRegistrationRequest, admin: TokenDat
 
     return {"message": f"Card {uid} linked to student {data.student_id} by {admin.full_name}"}
 
-@router.post("/{uid}/deactivate", description="Deactivate an IC card")
-async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin)):
+@router.patch("/{uid}/deactivate", description="Deactivate an IC card")
+async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin)) -> ICCard:
     client = User.get_pymongo_collection().database.client
     now = datetime.now(timezone.utc)
     
@@ -136,7 +159,30 @@ async def deactivate_card(uid: str, admin: TokenData = Depends(get_current_admin
                 created_at=now
             ).insert(session=session)
 
-    return {"message": f"Card {uid} successfully deactivated and logged."}
+    return card
+
+@router.patch("/{uid}/activate", description="Activate an IC card")
+async def activate_card(uid: str, admin: TokenData = Depends(get_current_admin)) -> ICCard:
+    
+    card = await ICCard.find_one(ICCard.uid == uid)
+    if not card:
+        raise HTTPException(404, "Card not found")
+    if card.status == ICCardStatus.active:
+        raise HTTPException(400, "Card is already active")
+    
+    card.status = ICCardStatus.active
+    await card.save()
+    
+    await AdminLog(
+                admin_id=PydanticObjectId(admin.id),
+                admin_name=admin.full_name,
+                action=f"Activated card {uid}",
+                target=f"Was linked to Student: {card.student_id}",
+                targeted_student_id=card.student_id,
+                created_at=datetime.now(timezone.utc)
+    ).insert()
+
+    return card
 
 @router.post("/{uid}/unlink", description="Unlink an IC card from its student (keep card active)")
 async def unlink_card(uid: str, admin: TokenData = Depends(get_current_admin)):
@@ -187,16 +233,15 @@ async def card_scan(scan: ScanRequest):
                 await card.set({ICCard.updated_at: now})
                 print(">>> Updated existing unlinked card.")
             else:
-                new_card = ICCard(
-                    uid=uid.strip().lower(),
-                    student_id=None, 
-                    status=ICCardStatus.active,
-                    created_at=now,
-                    updated_at=now
+                await ws_connection_manager.send_payload_to_tablet(
+                    WSSchema(
+                        action="NEW_CARD",
+                        card_uid=uid   
+                    )
                 )
-                await new_card.insert()
-                print(">>> Successfully inserted NEW card to DB.")
-            return {"status": "new_card", "message": "Card captured. Register in Admin."}
+                
+                print(">>> Sended new card notification to tablet.")
+            return {"status": "new_card", "message": "Card captured. Register in Tablets."}
         if card.status != ICCardStatus.active:
             return {"status": "error", "message": "Card is not active"}
 
@@ -270,6 +315,16 @@ async def card_scan(scan: ScanRequest):
                 created_at=now
             )
             await new_purchase.insert(session=session)
+            
+            try:
+                await ws_connection_manager.send_payload_to_tablet(WSSchema(
+                    action="BUY",
+                    student_id=str(student.student_id),
+                    student_name=student.first_name,
+                    debt_amount=student.account_balance
+                ))
+            except ConnectionError:
+                return {"status": "error", "message": "Purchase recorded but no tablet connected"}
 
             return {
                 "status": "success",

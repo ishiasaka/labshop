@@ -128,6 +128,47 @@
             </button>
           </div>
         </div>
+        <div class="card shelves">
+          <h2>Shelves Management</h2>
+          <div class="input-group">
+            <input
+              type="text"
+              id="shelfSearch"
+              placeholder="Search Shelf ID or USB Port..."
+              onkeyup="filterShelves()"
+            />
+          </div>
+
+          <div class="input-group">
+            <label>Shelf ID:</label>
+            <input type="text" id="shelf_id" />
+            <label>USB Port:</label>
+            <input type="number" id="shelf_usb_port" />
+            <label>Price (¥):</label>
+            <input type="number" id="shelf_price" />
+          </div>
+
+          <button class="btn-success" onclick="createShelf()">Add / Update Shelf</button>
+
+          <table id="shelfTable" class="styled-table">
+            <thead>
+              <tr>
+                <th>Shelf ID</th>
+                <th>USB Port</th>
+                <th>Price</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+          <div class="pager">
+            <button id="shelvesPrev" onclick="shelvesPrevPage()">‹</button>
+            <span id="shelvesPageInfo">1 / 1</span>
+            <button id="shelvesNext" onclick="shelvesNextPage()">›</button>
+          </div>
+        </div>
       </div>
 
       <div>

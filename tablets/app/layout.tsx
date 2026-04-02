@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import Provider from './provider';
+import EmotionRegistry from './emotion-registry';
 import './globals.scss';
 
 const poppins = Poppins({
@@ -20,9 +21,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${poppins.variable}`} suppressHydrationWarning>
-        <Provider>{children}</Provider>
+        <EmotionRegistry>
+          <Provider>{children}</Provider>
+        </EmotionRegistry>
       </body>
     </html>
   );
